@@ -8,6 +8,7 @@ import BienvenidaPage from "@/pages/BienvenidaPage";
 import InicioPage from "@/pages/InicioPage";
 import ForosPage from "@/pages/ForosPage";
 import ForoPage from "@/pages/ForoPage";
+import ChatPage from "@/pages/ChatPage";
 import AjustesPage from "@/pages/AjustesPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
@@ -70,6 +71,12 @@ export default function App() {
           path="/foro/:id"
           element={
             isOnboardingCompleted ? <ForoPage /> : <Navigate to="/bienvenida" replace />
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            isOnboardingCompleted ? <ChatPage /> : <Navigate to="/bienvenida" replace />
           }
         />
         <Route

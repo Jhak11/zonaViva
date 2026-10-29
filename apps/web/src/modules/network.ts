@@ -11,6 +11,10 @@ import type {
   SyncUnavailablePayload,
   PeerSyncRequestPayload,
   PeerSyncResponsePayload,
+  MatchedPayload,
+  ChatMsgPayload,
+  PeerLeftPayload,
+  QueueTimeoutPayload,
 } from "@zonaviva/protocol";
 
 const RELAY_URL =
@@ -27,6 +31,11 @@ type ConnectionListener = (connected: boolean) => void;
 type SyncChunkListener = (payload: SyncChunkPayload) => void;
 type SyncUnavailableListener = (payload: SyncUnavailablePayload) => void;
 type PeerSyncRequestListener = (payload: PeerSyncRequestPayload) => void;
+type MatchedListener = (payload: MatchedPayload) => void;
+type ChatMsgListener = (payload: ChatMsgPayload) => void;
+type PeerLeftListener = (payload: PeerLeftPayload) => void;
+type QueueTimeoutListener = (payload: QueueTimeoutPayload) => void;
+type QueueCancelledListener = () => void;
 
 const messageListeners = new Set<MessageListener>();
 const occupancyListeners = new Set<OccupancyListener>();
@@ -34,6 +43,11 @@ const connectionListeners = new Set<ConnectionListener>();
 const syncChunkListeners = new Set<SyncChunkListener>();
 const syncUnavailableListeners = new Set<SyncUnavailableListener>();
 const peerSyncRequestListeners = new Set<PeerSyncRequestListener>();
+const matchedListeners = new Set<MatchedListener>();
+const chatMsgListeners = new Set<ChatMsgListener>();
+const peerLeftListeners = new Set<PeerLeftListener>();
+const queueTimeoutListeners = new Set<QueueTimeoutListener>();
+const queueCancelledListeners = new Set<QueueCancelledListener>();
 
 /**
  * Conecta al servidor Relay Socket.IO con reconexión automática.
@@ -90,6 +104,27 @@ export function connectNetwork(): Socket {
 
     socket.on("peer_sync_request", (payload: PeerSyncRequestPayload) => {
       peerSyncRequestListeners.forEach((fn) => fn(payload));
+    });
+
+    // Eventos de chat efímero E2EE
+    socket.on("matched", (payload: MatchedPayload) => {
+      matchedListeners.forEach((fn) => fn(payload));
+    });
+
+    socket.on("chat_msg", (payload: ChatMsgPayload) => {
+      chatMsgListeners.forEach((fn) => fn(payload));
+    });
+
+    socket.on("peer_left", (payload: PeerLeftPayload) => {
+      peerLeftListeners.forEach((fn) => fn(payload));
+    });
+
+    socket.on("queue_timeout", (payload: QueueTimeoutPayload) => {
+      queueTimeoutListeners.forEach((fn) => fn(payload));
+    });
+
+    socket.on("queue_cancelled", () => {
+      queueCancelledListeners.forEach((fn) => fn());
     });
   } else if (!socket.connected) {
     socket.connect();
@@ -169,6 +204,58 @@ export function reportHasHistory(forumId: string, count: number): void {
   }
 }
 
+// ── Funciones de Chat Efímero ─────────────────────────────────────────
+
+/**
+ * Entra en la cola de emparejamiento para una zona con clave pública efímera ECDH
+ */
+export function queueChat(
+  zoneId: string,
+  ephemeralPublicKey: string
+): Promise<{ ok: boolean; status?: string; error?: string }> {
+  const s = connectNetwork();
+  return new Promise((resolve) => {
+    s.emit(
+      "queue_chat",
+      { zoneId, ephemeralPublicKey },
+      (res: { ok: boolean; status?: string; error?: string }) => {
+        resolve(res || { ok: true, status: "queued" });
+      }
+    );
+  });
+}
+
+/**
+ * Cancela la búsqueda en la cola de chat
+ */
+export function cancelQueue(): void {
+  if (socket?.connected) {
+    socket.emit("cancel_queue");
+  }
+}
+
+/**
+ * Envía un mensaje cifrado a la sala de chat
+ */
+export function sendChatMessage(
+  roomId: string,
+  ciphertext: string,
+  nonce: string
+): void {
+  if (socket?.connected) {
+    socket.emit("chat_msg", { roomId, ciphertext, nonce });
+  }
+}
+
+/**
+ * Abandona la sala de chat actual
+ */
+export function leaveChat(roomId: string): void {
+  if (socket?.connected) {
+    socket.emit("leave_chat", { roomId });
+  }
+}
+
 // ── Registro de oyentes de eventos ────────────────────────────────────
 
 export function onMessageSealed(listener: MessageListener): () => void {
@@ -199,4 +286,29 @@ export function onSyncUnavailable(listener: SyncUnavailableListener): () => void
 export function onPeerSyncRequest(listener: PeerSyncRequestListener): () => void {
   peerSyncRequestListeners.add(listener);
   return () => peerSyncRequestListeners.delete(listener);
+}
+
+export function onMatched(listener: MatchedListener): () => void {
+  matchedListeners.add(listener);
+  return () => matchedListeners.delete(listener);
+}
+
+export function onChatMsg(listener: ChatMsgListener): () => void {
+  chatMsgListeners.add(listener);
+  return () => chatMsgListeners.delete(listener);
+}
+
+export function onPeerLeft(listener: PeerLeftListener): () => void {
+  peerLeftListeners.add(listener);
+  return () => peerLeftListeners.delete(listener);
+}
+
+export function onQueueTimeout(listener: QueueTimeoutListener): () => void {
+  queueTimeoutListeners.add(listener);
+  return () => queueTimeoutListeners.delete(listener);
+}
+
+export function onQueueCancelled(listener: QueueCancelledListener): () => void {
+  queueCancelledListeners.add(listener);
+  return () => queueCancelledListeners.delete(listener);
 }

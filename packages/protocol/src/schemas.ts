@@ -94,3 +94,7 @@ export const ChatMsgSchema = z.object({
 export const LeaveChatSchema = z.object({
   roomId: z.string().min(1).max(128),
 });
+
+export const CancelQueueSchema = z.object({
+  zoneId: z.string().min(1).max(128).optional(),
+});

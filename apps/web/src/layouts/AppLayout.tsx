@@ -2,8 +2,18 @@
 //  Layout principal con barra de navegación inferior (mobile-first)
 // ──────────────────────────────────────────────────────────────────────
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { MapIcon, ChatBubbleOvalLeftEllipsisIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
-import { MapIcon as MapIconSolid, ChatBubbleOvalLeftEllipsisIcon as ChatIconSolid, Cog6ToothIcon as CogIconSolid } from "@heroicons/react/24/solid";
+import {
+  MapIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  SparklesIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
+import {
+  MapIcon as MapIconSolid,
+  ChatBubbleOvalLeftEllipsisIcon as ChatIconSolid,
+  SparklesIcon as SparklesIconSolid,
+  Cog6ToothIcon as CogIconSolid,
+} from "@heroicons/react/24/solid";
 import OfflineBanner from "@/components/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
@@ -33,6 +43,12 @@ export default function AppLayout() {
             OutlineIcon={ChatBubbleOvalLeftEllipsisIcon}
             SolidIcon={ChatIconSolid}
             forceActive={isForosActive}
+          />
+          <NavItem
+            to="/chat"
+            label="Chat 1:1"
+            OutlineIcon={SparklesIcon}
+            SolidIcon={SparklesIconSolid}
           />
           <NavItem to="/ajustes" label="Ajustes" OutlineIcon={Cog6ToothIcon} SolidIcon={CogIconSolid} />
         </div>

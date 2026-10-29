@@ -247,24 +247,49 @@ export default function InicioPage() {
           </div>
         </section>
 
-        {/* Acceso Rápido a Lista de Foros */}
-        <section className="bg-surface-1/60 border border-surface-2/60 rounded-2xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center">
-              <SparklesIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">Directorio de Foros</p>
-              <p className="text-xs text-slate-400">Explora salas por zona y comunidad</p>
-            </div>
-          </div>
+        {/* Accesos Rápidos: Foros y Chat 1 a 1 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <Link
             to="/foros"
-            className="px-3.5 py-2 rounded-xl bg-surface-2 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+            className="bg-surface-1/60 hover:bg-surface-1 border border-surface-2/60 hover:border-surface-2 rounded-2xl p-4 flex items-center justify-between transition-colors group"
           >
-            Abrir Foros
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-300 flex items-center justify-center flex-none">
+                <ChatBubbleLeftRightIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-white group-hover:text-brand-300 transition-colors">
+                  Directorio de Foros
+                </p>
+                <p className="text-[10px] text-slate-400">Salas por zona geográfica</p>
+              </div>
+            </div>
+            <ChevronRightIcon className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
           </Link>
-        </section>
+
+          <Link
+            to="/chat"
+            className="bg-surface-1/60 hover:bg-surface-1 border border-surface-2/60 hover:border-purple-500/40 rounded-2xl p-4 flex items-center justify-between transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center flex-none">
+                <SparklesIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors">
+                    Chat 1 a 1 Efímero
+                  </p>
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">
+                    E2EE
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400">Conversa sin dejar rastro</p>
+              </div>
+            </div>
+            <ChevronRightIcon className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          </Link>
+        </div>
       </div>
 
       {/* Modal selector de zona completo */}

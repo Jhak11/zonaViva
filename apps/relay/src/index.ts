@@ -17,6 +17,10 @@ import {
   JoinForumSchema,
   SyncRequestSchema,
   PeerSyncResponseSchema,
+  QueueChatSchema,
+  ChatMsgSchema,
+  LeaveChatSchema,
+  CancelQueueSchema,
   type MsgPayload,
   type MsgSealedPayload,
   type PeerSyncRequestPayload,
@@ -70,6 +74,18 @@ const pendingSyncs = new Map<string, PendingSync>();
 
 // Registro de sockets que han reportado tener copia local de un foro
 const forumHolders = new Map<string, Set<string>>(); // forumId -> Set<socketId>
+
+// ── Colas de Chat Aleatorio Efímero (E2EE) en memoria ─────────────────
+interface QueuedChatUser {
+  socketId: string;
+  zoneId: string;
+  ephemeralPublicKey: string;
+  timeoutId: NodeJS.Timeout;
+}
+// zoneId -> QueuedChatUser[]
+const chatQueues = new Map<string, QueuedChatUser[]>();
+// socketId -> roomId (chat activo)
+const activeChatRooms = new Map<string, string>();
 
 // ── Servidor HTTP ─────────────────────────────────────────────────────
 const httpServer = createServer((req, res) => {
@@ -322,6 +338,135 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
+  // ── Chat Aleatorio Efímero (E2EE) ──────────────────────────────────
+
+  // 1. Entrar en cola de emparejamiento por zona
+  socket.on("queue_chat", (rawPayload: unknown, ack?: (res: { ok: boolean; status?: string; error?: string }) => void) => {
+    const parsed = QueueChatSchema.safeParse(rawPayload);
+    if (!parsed.success) {
+      if (typeof ack === "function") ack({ ok: false, error: "Datos de emparejamiento inválidos." });
+      return;
+    }
+
+    const { zoneId, ephemeralPublicKey } = parsed.data;
+
+    // Si ya estaba en un chat activo, avisar y salir
+    const currentRoom = activeChatRooms.get(socket.id);
+    if (currentRoom) {
+      socket.to(currentRoom).emit("peer_left", { roomId: currentRoom });
+      socket.leave(currentRoom);
+      activeChatRooms.delete(socket.id);
+    }
+
+    // Si ya estaba en la cola de alguna zona, limpiarlo
+    for (const [, queue] of chatQueues.entries()) {
+      const idx = queue.findIndex((item) => item.socketId === socket.id);
+      if (idx !== -1) {
+        clearTimeout(queue[idx].timeoutId);
+        queue.splice(idx, 1);
+      }
+    }
+
+    if (!chatQueues.has(zoneId)) {
+      chatQueues.set(zoneId, []);
+    }
+    const queue = chatQueues.get(zoneId)!;
+
+    // Buscar si hay otro participante en espera (FIFO)
+    let peerUser: QueuedChatUser | null = null;
+    while (queue.length > 0) {
+      const candidate = queue.shift()!;
+      clearTimeout(candidate.timeoutId);
+      const peerSocket = io.sockets.sockets.get(candidate.socketId);
+      if (peerSocket && peerSocket.connected && peerSocket.id !== socket.id) {
+        peerUser = candidate;
+        break;
+      }
+    }
+
+    if (peerUser) {
+      const peerSocket = io.sockets.sockets.get(peerUser.socketId)!;
+      const roomId = `chat:${crypto.randomUUID()}`;
+
+      peerSocket.join(roomId);
+      socket.join(roomId);
+
+      activeChatRooms.set(peerSocket.id, roomId);
+      activeChatRooms.set(socket.id, roomId);
+
+      // Notificar a ambos con la clave pública efímera del otro
+      peerSocket.emit("matched", {
+        roomId,
+        peerPublicKey: ephemeralPublicKey,
+      });
+
+      socket.emit("matched", {
+        roomId,
+        peerPublicKey: peerUser.ephemeralPublicKey,
+      });
+
+      if (typeof ack === "function") ack({ ok: true, status: "matched" });
+    } else {
+      // Poner en cola con timeout de 30 segundos
+      const timeoutId = setTimeout(() => {
+        const q = chatQueues.get(zoneId);
+        if (q) {
+          const idx = q.findIndex((item) => item.socketId === socket.id);
+          if (idx !== -1) {
+            q.splice(idx, 1);
+            socket.emit("queue_timeout", { zoneId });
+          }
+        }
+      }, 30_000);
+
+      queue.push({
+        socketId: socket.id,
+        zoneId,
+        ephemeralPublicKey,
+        timeoutId,
+      });
+
+      if (typeof ack === "function") ack({ ok: true, status: "queued" });
+    }
+  });
+
+  // 2. Cancelar búsqueda en cola
+  socket.on("cancel_queue", (rawPayload?: unknown) => {
+    CancelQueueSchema.safeParse(rawPayload); // opcional
+    for (const [, queue] of chatQueues.entries()) {
+      const idx = queue.findIndex((item) => item.socketId === socket.id);
+      if (idx !== -1) {
+        clearTimeout(queue[idx].timeoutId);
+        queue.splice(idx, 1);
+      }
+    }
+    socket.emit("queue_cancelled");
+  });
+
+  // 3. Enviar mensaje cifrado de chat (relay zero-storage)
+  socket.on("chat_msg", (rawPayload: unknown) => {
+    const parsed = ChatMsgSchema.safeParse(rawPayload);
+    if (!parsed.success) return;
+
+    const { roomId, ciphertext, nonce } = parsed.data;
+
+    // Solo retransmitir si pertenece a la sala
+    if (!socket.rooms.has(roomId)) return;
+
+    socket.to(roomId).emit("chat_msg", { roomId, ciphertext, nonce });
+  });
+
+  // 4. Salir de un chat activo
+  socket.on("leave_chat", (rawPayload: unknown) => {
+    const parsed = LeaveChatSchema.safeParse(rawPayload);
+    if (!parsed.success) return;
+
+    const { roomId } = parsed.data;
+    socket.to(roomId).emit("peer_left", { roomId });
+    socket.leave(roomId);
+    activeChatRooms.delete(socket.id);
+  });
+
   // ── Ping para verificar latencia ────────────────────────────────────
   socket.on("ping_relay", (cb) => {
     if (typeof cb === "function") cb({ ts: Date.now() });
@@ -334,6 +479,22 @@ io.on("connection", (socket: Socket) => {
       connectionsByIp.delete(ip);
     } else {
       connectionsByIp.set(ip, remaining);
+    }
+
+    // Limpiar de colas de chat
+    for (const [, queue] of chatQueues.entries()) {
+      const idx = queue.findIndex((item) => item.socketId === socket.id);
+      if (idx !== -1) {
+        clearTimeout(queue[idx].timeoutId);
+        queue.splice(idx, 1);
+      }
+    }
+
+    // Si estaba en un chat activo, notificar al interlocutor
+    const activeRoom = activeChatRooms.get(socket.id);
+    if (activeRoom) {
+      socket.to(activeRoom).emit("peer_left", { roomId: activeRoom });
+      activeChatRooms.delete(socket.id);
     }
 
     // Limpiar salas y holders

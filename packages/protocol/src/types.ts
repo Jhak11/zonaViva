@@ -177,3 +177,15 @@ export interface ChatMsgPayload {
 export interface LeaveChatPayload {
   roomId: string;
 }
+
+export interface CancelQueuePayload {
+  zoneId?: string;
+}
+
+export interface PeerLeftPayload {
+  roomId: string;
+}
+
+export interface QueueTimeoutPayload {
+  zoneId: string;
+}
