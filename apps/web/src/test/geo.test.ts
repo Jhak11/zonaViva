@@ -33,7 +33,7 @@ describe("Geo Module - Puno Pilot", () => {
   });
 
   it("detects 'puno-laureles' test zone at Jirón Los Laureles", () => {
-    const zone = detectZone(-15.8260, -70.0150);
+    const zone = detectZone(-15.8672, -70.0094);
     expect(zone).not.toBeNull();
     expect(zone?.id).toBe("puno-laureles");
     expect(zone?.name).toContain("Los Laureles");
