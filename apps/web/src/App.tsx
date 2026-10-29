@@ -6,6 +6,8 @@ import { useGeoStore } from "@/stores/geoStore";
 // Vistas
 import BienvenidaPage from "@/pages/BienvenidaPage";
 import InicioPage from "@/pages/InicioPage";
+import ForosPage from "@/pages/ForosPage";
+import ForoPage from "@/pages/ForoPage";
 import AjustesPage from "@/pages/AjustesPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
@@ -44,6 +46,14 @@ export default function App() {
         <Route
           path="/"
           element={hasSession ? <InicioPage /> : <Navigate to="/bienvenida" replace />}
+        />
+        <Route
+          path="/foros"
+          element={hasSession ? <ForosPage /> : <Navigate to="/bienvenida" replace />}
+        />
+        <Route
+          path="/foro/:id"
+          element={hasSession ? <ForoPage /> : <Navigate to="/bienvenida" replace />}
         />
         <Route
           path="/ajustes"

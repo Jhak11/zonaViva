@@ -35,6 +35,16 @@ export const ZONES: Zone[] = [
     mapCenter: { lat: -15.8368, lng: -70.0198 },
     mapZoom: 16,
   },
+  {
+    id: "puno-laureles",
+    name: "Jirón Los Laureles (Pruebas)",
+    description: "Zona permanente en Jr. Los Laureles para pruebas de proximidad y desarrollo",
+    type: "circle",
+    center: { lat: -15.8260, lng: -70.0150 },
+    radiusMeters: 400,
+    mapCenter: { lat: -15.8260, lng: -70.0150 },
+    mapZoom: 16,
+  },
 ];
 
 /** Mapa rápido por ID para búsquedas O(1) */

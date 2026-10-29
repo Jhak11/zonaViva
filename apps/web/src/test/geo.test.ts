@@ -32,6 +32,13 @@ describe("Geo Module - Puno Pilot", () => {
     expect(zone?.id).toBe("puno-mercado");
   });
 
+  it("detects 'puno-laureles' test zone at Jirón Los Laureles", () => {
+    const zone = detectZone(-15.8260, -70.0150);
+    expect(zone).not.toBeNull();
+    expect(zone?.id).toBe("puno-laureles");
+    expect(zone?.name).toContain("Los Laureles");
+  });
+
   it("returns null when outside of all predefined zones (e.g. Juliaca / Lima)", () => {
     // Juliaca coordinates (~ -15.498, -70.133)
     const zoneJuliaca = detectZone(-15.498, -70.133);

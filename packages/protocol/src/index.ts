@@ -6,4 +6,4 @@
 export * from "./types.js";
 export * from "./schemas.js";
 export * from "./constants.js";
-export { ZONES } from "./zones.js";
+export { ZONES, ZONES_BY_ID } from "./zones.js";
