@@ -1,0 +1,19 @@
+{
+  "name": "@zonaviva/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tipos, esquemas Zod y constantes compartidas entre web, relay y archivist",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

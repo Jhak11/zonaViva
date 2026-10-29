@@ -1,0 +1,18 @@
+{
+  "name": "zonaviva",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ZonaViva – red social geográfica descentralizada basada en foros",
+  "scripts": {
+    "dev:web": "pnpm --filter @zonaviva/web dev",
+    "dev:relay": "pnpm --filter @zonaviva/relay dev",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}
