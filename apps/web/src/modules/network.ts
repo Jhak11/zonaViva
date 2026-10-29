@@ -24,6 +24,18 @@ const RELAY_URL =
 let socket: Socket | null = null;
 let relayPublicKey: string | null = null;
 
+// Precargar clave pública del relay si estamos en navegador
+if (typeof window !== "undefined") {
+  fetch(`${RELAY_URL}/key`)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data?.relayPublicKey) {
+        relayPublicKey = data.relayPublicKey;
+      }
+    })
+    .catch(() => {});
+}
+
 // Callbacks registrados
 type MessageListener = (msg: MsgSealedPayload) => void;
 type OccupancyListener = (data: { forumId: string; count: number }) => void;

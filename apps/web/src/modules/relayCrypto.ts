@@ -4,10 +4,53 @@
 
 function base64urlToBuf(str: string): ArrayBuffer {
   const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  const binary = atob(base64);
+  const padLen = (4 - (base64.length % 4)) % 4;
+  const padded = base64 + "=".repeat(padLen);
+  const binary = atob(padded);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes.buffer;
+}
+
+/**
+ * Normaliza una firma ECDSA asegurando el formato IEEE P1363 (64 bytes raw R||S)
+ * que exige WebCrypto. Si la firma viene en formato ASN.1 DER (Node.js por defecto),
+ * extrae R y S y los ajusta a 32 bytes cada uno.
+ */
+function normalizeEcdsaSignature(sigBytes: Uint8Array): Uint8Array {
+  if (sigBytes.length === 64) {
+    return sigBytes;
+  }
+  // ASN.1 DER format: 0x30 [len] 0x02 [r_len] [r] 0x02 [s_len] [s]
+  if (sigBytes.length >= 8 && sigBytes[0] === 0x30) {
+    let offset = 2;
+    if (sigBytes[1] & 0x80) {
+      offset = 2 + (sigBytes[1] & 0x7f);
+    }
+    if (sigBytes[offset] === 0x02) {
+      const rLen = sigBytes[offset + 1];
+      offset += 2;
+      const r = sigBytes.subarray(offset, offset + rLen);
+      offset += rLen;
+      if (sigBytes[offset] === 0x02) {
+        const sLen = sigBytes[offset + 1];
+        offset += 2;
+        const s = sigBytes.subarray(offset, offset + sLen);
+
+        const p1363 = new Uint8Array(64);
+        const rStart = r.length > 32 ? r.length - 32 : 0;
+        const rBytes = r.subarray(rStart);
+        p1363.set(rBytes, 32 - rBytes.length);
+
+        const sStart = s.length > 32 ? s.length - 32 : 0;
+        const sBytes = s.subarray(sStart);
+        p1363.set(sBytes, 64 - sBytes.length);
+
+        return p1363;
+      }
+    }
+  }
+  return sigBytes;
 }
 
 /**
@@ -64,10 +107,13 @@ export async function verifyRelaySeal(
     );
 
     const encoder = new TextEncoder();
+    const rawSig = new Uint8Array(base64urlToBuf(msg.relaySig));
+    const normalizedSig = normalizeEcdsaSignature(rawSig);
+
     return await crypto.subtle.verify(
       { name: "ECDSA", hash: "SHA-256" },
       key,
-      base64urlToBuf(msg.relaySig),
+      normalizedSig.buffer as ArrayBuffer,
       encoder.encode(payloadToVerify)
     );
   } catch {

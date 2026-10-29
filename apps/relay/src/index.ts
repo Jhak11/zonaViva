@@ -50,7 +50,11 @@ function signRelayMessage(
   const payloadToSign = `${id}:${forumId}:${relayTs}:${contentHash}`;
   const sign = crypto.createSign("SHA256");
   sign.update(payloadToSign);
-  return sign.sign(relayKeyPair.privateKey, "base64url");
+  // WebCrypto exige formato IEEE P1363 (64 bytes raw R||S) en lugar de ASN.1 DER
+  return sign.sign(
+    { key: relayKeyPair.privateKey, dsaEncoding: "ieee-p1363" },
+    "base64url"
+  );
 }
 
 // ── Control de conexiones por IP (en memoria) ─────────────────────────

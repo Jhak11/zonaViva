@@ -23,7 +23,7 @@ export default function ForoPage() {
   const { id } = useParams<{ id: string }>();
   const forumId = id || "";
 
-  const { currentZone } = useGeoStore();
+  const { currentZone, simulatedZone, setSimulatedZone } = useGeoStore();
   const { session } = useIdentityStore();
   const {
     messages,
@@ -48,7 +48,8 @@ export default function ForoPage() {
   const zoneId = isZoneForum ? forumId.slice(FORUM_PREFIX_ZONE.length) : "";
   const zone = ZONES_BY_ID[zoneId];
 
-  const isPhysicallyInside = Boolean(zone && currentZone?.id === zone.id);
+  const activeZone = simulatedZone ?? currentZone;
+  const isPhysicallyInside = Boolean(zone && activeZone?.id === zone.id);
 
   // Unirse al foro y cargar copias locales de IndexedDB al montar
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function ForoPage() {
       return;
     }
 
-    const res = await publishMessage(inputContent, session, currentZone);
+    const res = await publishMessage(inputContent, session, activeZone);
     if (res.success) {
       setInputContent("");
       if (res.queued) {
@@ -346,6 +347,15 @@ export default function ForoPage() {
             <p className="text-slate-400 text-xs max-w-md mx-auto">
               Debes encontrarte físicamente en <strong className="text-slate-200">{zone?.name || "esta zona"}</strong> para poder enviar mensajes. Tu posición GPS actual no coincide con esta zona geográfica.
             </p>
+            {zone && (
+              <button
+                type="button"
+                onClick={() => setSimulatedZone(zone)}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-semibold hover:bg-purple-500/30 transition-colors active:scale-95"
+              >
+                <span>🧪 Probar publicación aquí (Simular GPS)</span>
+              </button>
+            )}
           </div>
         )}
       </footer>

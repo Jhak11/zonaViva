@@ -161,4 +161,38 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
     const isValid = await verifyRelaySeal("somePublicKey", msgWithoutSeal);
     expect(isValid).toBe(false);
   });
+
+  it("successfully verifies both IEEE P1363 and DER relay signatures", async () => {
+    const nodeCrypto = await import("node:crypto");
+    const kp = nodeCrypto.generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+    const pubSpkiB64 = kp.publicKey.export({ type: "spki", format: "der" }).toString("base64url");
+
+    const msg = {
+      id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
+      forumId: "zone:puno-centro",
+      relayTs: 1730000000000,
+      content: "Mensaje sellado legítimamente",
+    };
+
+    const contentHash = nodeCrypto.createHash("sha256").update(msg.content).digest("hex");
+    const payloadToSign = `${msg.id}:${msg.forumId}:${msg.relayTs}:${contentHash}`;
+
+    // 1. Firma en formato IEEE P1363 (estándar relay nuevo)
+    const p1363Sig = nodeCrypto
+      .createSign("SHA256")
+      .update(payloadToSign)
+      .sign({ key: kp.privateKey, dsaEncoding: "ieee-p1363" }, "base64url");
+
+    const isP1363Valid = await verifyRelaySeal(pubSpkiB64, { ...msg, relaySig: p1363Sig });
+    expect(isP1363Valid).toBe(true);
+
+    // 2. Firma en formato DER (estándar legacy o fallback)
+    const derSig = nodeCrypto
+      .createSign("SHA256")
+      .update(payloadToSign)
+      .sign(kp.privateKey, "base64url");
+
+    const isDerValid = await verifyRelaySeal(pubSpkiB64, { ...msg, relaySig: derSig });
+    expect(isDerValid).toBe(true);
+  });
 });
