@@ -15,53 +15,72 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import AppLayout from "@/layouts/AppLayout";
 
 export default function App() {
-  const { session, initSession } = useIdentityStore();
+  const { session, isOnboardingCompleted, isReady, initSession } = useIdentityStore();
   const { startWatching } = useGeoStore();
 
-  // Inicializar sesión al arrancar
+  // Inicializar estado de sesión y onboarding al arrancar
   useEffect(() => {
     initSession();
   }, [initSession]);
 
-  // Si ya hay sesión, empezar a escuchar GPS
+  // Si ya hay sesión activa, iniciar GPS
   useEffect(() => {
     if (session) {
       startWatching();
     }
   }, [session, startWatching]);
 
-  // Si no hay sesión → onboarding; si la hay → app
-  const hasSession = Boolean(session);
+  // Pantalla de carga mientras se recupera estado de localStorage
+  if (!isReady) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface-0 text-white">
+        <div className="w-12 h-12 rounded-2xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-2xl animate-pulse mb-3">
+          📍
+        </div>
+        <p className="text-slate-400 text-xs font-medium">Iniciando ZonaViva…</p>
+      </div>
+    );
+  }
 
   return (
     <Routes>
-      {/* Onboarding: solo si NO hay sesión */}
+      {/* Onboarding: solo accesible si no se ha completado */}
       <Route
         path="/bienvenida"
-        element={!hasSession ? <BienvenidaPage /> : <Navigate to="/" replace />}
+        element={
+          !isOnboardingCompleted ? <BienvenidaPage /> : <Navigate to="/" replace />
+        }
       />
 
-      {/* App principal: requiere sesión */}
+      {/* Rutas principales protegidas por Onboarding */}
       <Route element={<AppLayout />}>
         <Route
           path="/"
-          element={hasSession ? <InicioPage /> : <Navigate to="/bienvenida" replace />}
+          element={
+            isOnboardingCompleted ? <InicioPage /> : <Navigate to="/bienvenida" replace />
+          }
         />
         <Route
           path="/foros"
-          element={hasSession ? <ForosPage /> : <Navigate to="/bienvenida" replace />}
+          element={
+            isOnboardingCompleted ? <ForosPage /> : <Navigate to="/bienvenida" replace />
+          }
         />
         <Route
           path="/foro/:id"
-          element={hasSession ? <ForoPage /> : <Navigate to="/bienvenida" replace />}
+          element={
+            isOnboardingCompleted ? <ForoPage /> : <Navigate to="/bienvenida" replace />
+          }
         />
         <Route
           path="/ajustes"
-          element={hasSession ? <AjustesPage /> : <Navigate to="/bienvenida" replace />}
+          element={
+            isOnboardingCompleted ? <AjustesPage /> : <Navigate to="/bienvenida" replace />
+          }
         />
       </Route>
 
-      {/* Redirigir raíz según estado */}
+      {/* Rutas no encontradas */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
