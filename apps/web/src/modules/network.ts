@@ -9,7 +9,9 @@ import type {
   MsgSealedPayload,
 } from "@zonaviva/protocol";
 
-const RELAY_URL = import.meta.env.VITE_RELAY_URL || "http://localhost:3001";
+const RELAY_URL =
+  import.meta.env.VITE_RELAY_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:3001");
 
 let socket: Socket | null = null;
 let relayPublicKey: string | null = null;

@@ -22,6 +22,8 @@ interface GeoState {
   currentZone: Zone | null;
   /** Zona seleccionada manualmente para explorar (sobrescribe currentZone en lectura) */
   manualZone: Zone | null;
+  /** Zona simulada para pruebas locales de desarrollo */
+  simulatedZone: Zone | null;
   /** Mensaje de error descriptivo */
   error: string | null;
   /** ID del watchPosition para poder limpiar */
@@ -33,6 +35,8 @@ interface GeoState {
   stopWatching: () => void;
   /** Seleccionar zona manualmente (modo exploración) */
   setManualZone: (zone: Zone | null) => void;
+  /** Simular ubicación GPS para pruebas de proximidad */
+  setSimulatedZone: (zone: Zone | null) => void;
   /** Zona efectiva: manual si está definida, si no la del GPS */
   effectiveZone: () => Zone | null;
 }
@@ -42,10 +46,21 @@ export const useGeoStore = create<GeoState>((set, get) => ({
   status: "idle",
   currentZone: null,
   manualZone: null,
+  simulatedZone: null,
   error: null,
   watchId: null,
 
   startWatching: () => {
+    // Si hay una zona simulada activa, no sobrescribir
+    if (get().simulatedZone) {
+      set({
+        permission: "granted",
+        status: "watching",
+        currentZone: get().simulatedZone,
+      });
+      return;
+    }
+
     if (!navigator.geolocation) {
       set({ permission: "unavailable", status: "unavailable" });
       return;
@@ -55,6 +70,7 @@ export const useGeoStore = create<GeoState>((set, get) => ({
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
+        if (get().simulatedZone) return;
         const { latitude, longitude } = pos.coords;
         const zone = detectZone(latitude, longitude);
         set({
@@ -65,6 +81,7 @@ export const useGeoStore = create<GeoState>((set, get) => ({
         });
       },
       (err) => {
+        if (get().simulatedZone) return;
         if (err.code === GeolocationPositionError.PERMISSION_DENIED) {
           set({ permission: "denied", status: "error", error: "Permiso de ubicación denegado." });
         } else {
@@ -91,6 +108,15 @@ export const useGeoStore = create<GeoState>((set, get) => ({
 
   setManualZone: (zone) => {
     set({ manualZone: zone });
+  },
+
+  setSimulatedZone: (zone) => {
+    set({
+      simulatedZone: zone,
+      currentZone: zone,
+      permission: zone ? "granted" : "prompt",
+      status: zone ? "watching" : "idle",
+    });
   },
 
   effectiveZone: () => {
