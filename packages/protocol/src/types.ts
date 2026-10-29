@@ -132,6 +132,19 @@ export interface SyncUnavailablePayload {
   forumId: string;
 }
 
+export interface PeerSyncRequestPayload {
+  requestId: string;
+  forumId: string;
+  since: number;
+}
+
+export interface PeerSyncResponsePayload {
+  requestId: string;
+  forumId: string;
+  messages: Message[];
+  hasMore: boolean;
+}
+
 export interface ListForumsPayload {
   geohash: string;
 }

@@ -1,11 +1,17 @@
 // ──────────────────────────────────────────────────────────────────────
-//  V7 – Ajustes y privacidad (versión inicial – Iteración 1)
+//  V7 – Ajustes y privacidad (Iteración 3)
+//  Gestión de almacenamiento local IndexedDB, persistencia y borrado.
 // ──────────────────────────────────────────────────────────────────────
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIdentityStore } from "@/stores/identityStore";
 import { useGeoStore } from "@/stores/geoStore";
 import { generateAlias } from "@/modules/identity";
 import { APP_NAME, MAX_ALIAS_LENGTH } from "@zonaviva/protocol";
+import {
+  getStorageStats,
+  clearAllLocalData,
+  requestStoragePersistence,
+} from "@/db/storage";
 
 export default function AjustesPage() {
   const { session, setAlias, renewSession } = useIdentityStore();
@@ -16,6 +22,52 @@ export default function AjustesPage() {
   const [aliasError, setAliasError] = useState("");
   const [renewConfirm, setRenewConfirm] = useState(false);
   const [isRenewing, setIsRenewing] = useState(false);
+
+  // Estadísticas de almacenamiento local
+  const [stats, setStats] = useState({
+    messageCount: 0,
+    forumCount: 0,
+    outboxCount: 0,
+    isPersistent: false,
+  });
+  const [clearConfirm, setClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [persistMsg, setPersistMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  async function loadStats() {
+    try {
+      const s = await getStorageStats();
+      setStats(s);
+    } catch {
+      // Ignorar fallo de lectura de stats
+    }
+  }
+
+  async function handleRequestPersist() {
+    const granted = await requestStoragePersistence();
+    setStats((prev) => ({ ...prev, isPersistent: granted }));
+    setPersistMsg(
+      granted
+        ? "✅ Almacenamiento persistente concedido. Tus copias no serán borradas automáticamente por el navegador."
+        : "⚠️ El navegador rechazó la persistencia estricta. Las copias locales se mantendrán mientras haya espacio en disco."
+    );
+  }
+
+  async function handleClearData() {
+    if (!clearConfirm) {
+      setClearConfirm(true);
+      return;
+    }
+    setClearing(true);
+    await clearAllLocalData();
+    await loadStats();
+    setClearing(false);
+    setClearConfirm(false);
+  }
 
   if (!session) return null;
 
@@ -48,11 +100,13 @@ export default function AjustesPage() {
     <div className="min-h-full bg-surface-0">
       {/* Cabecera */}
       <header className="px-4 pt-6 pb-4 pt-safe">
-        <h1 className="text-2xl font-bold text-white">Ajustes y privacidad</h1>
-        <p className="text-slate-400 text-sm mt-1">Tu sesión es temporal y anónima.</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Ajustes y Privacidad</h1>
+        <p className="text-slate-400 text-xs mt-1">
+          Tu identidad es temporal y tus conversaciones viven en tu dispositivo.
+        </p>
       </header>
 
-      <div className="px-4 pb-24 space-y-4">
+      <div className="px-4 pb-24 space-y-4 max-w-lg mx-auto">
         {/* ── Sección: Identidad ── */}
         <Section title="Identidad temporal">
           <div className="space-y-3">
@@ -69,13 +123,13 @@ export default function AjustesPage() {
                         if (e.target.value.length <= MAX_ALIAS_LENGTH) setAliasInput(e.target.value);
                         setAliasError("");
                       }}
-                      className="flex-1 px-3 py-1.5 rounded-lg bg-surface-0 border border-surface-2 text-white text-sm focus:outline-none focus:border-brand-500"
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-surface-0 border border-surface-2 text-white text-xs focus:outline-none focus:border-brand-500"
                       autoFocus
                     />
-                    <button onClick={handleAliasSave} className="text-brand-400 text-sm font-medium">
+                    <button onClick={handleAliasSave} className="text-brand-400 text-xs font-semibold">
                       Guardar
                     </button>
-                    <button onClick={() => { setEditingAlias(false); setAliasInput(session.alias); }} className="text-slate-500 text-sm">
+                    <button onClick={() => { setEditingAlias(false); setAliasInput(session.alias); }} className="text-slate-500 text-xs">
                       Cancelar
                     </button>
                   </div>
@@ -110,20 +164,81 @@ export default function AjustesPage() {
             {/* Renovar sesión */}
             <div className="pt-2">
               {renewConfirm && (
-                <p className="text-amber-400 text-sm mb-2">
-                  ⚠️ Se generará un nuevo alias y nuevas claves. Tu historial local se conserva pero tu identidad cambia. ¿Confirmar?
+                <p className="text-amber-400 text-xs mb-2">
+                  ⚠️ Se generará un nuevo alias y nuevo par de claves criptográficas. Tu historial local se conserva pero tu identidad anterior desaparece.
                 </p>
               )}
               <button
                 onClick={handleRenewSession}
                 disabled={isRenewing}
-                className={`w-full py-3 rounded-xl font-medium text-sm transition-colors ${
+                className={`w-full py-2.5 rounded-xl font-medium text-xs transition-colors ${
                   renewConfirm
                     ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
                     : "bg-surface-2 text-slate-300 hover:bg-surface-1 border border-surface-2"
                 }`}
               >
-                {isRenewing ? "Renovando…" : renewConfirm ? "Confirmar renovación de sesión" : "🔄 Renovar sesión y alias"}
+                {isRenewing ? "Renovando identidad…" : renewConfirm ? "Confirmar renovación de sesión" : "🔄 Renovar sesión y alias"}
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        {/* ── Sección: Almacenamiento local e IndexedDB (Iteración 3) ── */}
+        <Section title="Almacenamiento Local (IndexedDB)">
+          <div className="space-y-3 text-xs">
+            <InfoRow label="Mensajes guardados" value={<span className="font-semibold text-white">{stats.messageCount}</span>} />
+            <InfoRow label="Foros conservados" value={<span className="font-semibold text-white">{stats.forumCount}</span>} />
+            {stats.outboxCount > 0 && (
+              <InfoRow
+                label="Bandeja de salida pendiente"
+                value={<span className="font-semibold text-amber-400">{stats.outboxCount} mensajes</span>}
+              />
+            )}
+            <InfoRow
+              label="Estado persistencia"
+              value={
+                <span className={stats.isPersistent ? "text-emerald-400 font-medium" : "text-slate-400"}>
+                  {stats.isPersistent ? "Protegido contra limpieza" : "Estándar"}
+                </span>
+              }
+            />
+
+            {!stats.isPersistent && (
+              <button
+                onClick={handleRequestPersist}
+                className="w-full py-2 rounded-xl bg-surface-2 hover:bg-surface-2/80 text-brand-300 font-medium transition-colors"
+              >
+                🛡️ Solicitar almacenamiento persistente al navegador
+              </button>
+            )}
+
+            {persistMsg && (
+              <p className="p-2 rounded-lg bg-surface-0 border border-surface-2 text-slate-300 text-[11px] leading-relaxed">
+                {persistMsg}
+              </p>
+            )}
+
+            {/* Borrado de datos */}
+            <div className="pt-2 border-t border-surface-2/40">
+              {clearConfirm && (
+                <p className="text-red-400 text-[11px] mb-2 leading-relaxed">
+                  ⚠️ ¿Seguro que deseas eliminar todos los mensajes e historiales guardados en este dispositivo? Esta acción es irreversible.
+                </p>
+              )}
+              <button
+                onClick={handleClearData}
+                disabled={clearing}
+                className={`w-full py-2.5 rounded-xl font-medium transition-colors ${
+                  clearConfirm
+                    ? "bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30"
+                    : "bg-surface-2/70 text-slate-400 hover:text-red-300 border border-surface-2"
+                }`}
+              >
+                {clearing
+                  ? "Borrando almacenamiento…"
+                  : clearConfirm
+                  ? "Sí, borrar todo el historial local"
+                  : "🗑️ Borrar copias de foros de este dispositivo"}
               </button>
             </div>
           </div>
@@ -150,13 +265,13 @@ export default function AjustesPage() {
             <InfoRow
               label="Zona detectada"
               value={effectiveZone
-                ? <span className="text-brand-400">{effectiveZone.name}</span>
+                ? <span className="text-brand-400 font-medium">{effectiveZone.name}</span>
                 : <span className="text-slate-500">Fuera de zonas</span>}
             />
 
             {permission === "denied" && (
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <p className="text-amber-300 text-sm">
+                <p className="text-amber-300 text-xs">
                   Para activar la ubicación, ve a los ajustes de tu navegador y permite el acceso para esta página.
                 </p>
               </div>
@@ -166,7 +281,7 @@ export default function AjustesPage() {
 
         {/* ── Sección: Privacidad explicada ── */}
         <Section title="Qué datos se comparten">
-          <div className="space-y-2 text-sm text-slate-400">
+          <div className="space-y-2 text-xs text-slate-400">
             <PrivacyRow
               icon="✅"
               text="Tu ubicación exacta nunca sale de este dispositivo."
@@ -174,7 +289,7 @@ export default function AjustesPage() {
             />
             <PrivacyRow
               icon="✅"
-              text={`${APP_NAME} no almacena mensajes. El servidor solo los reenvía en tiempo real.`}
+              text={`${APP_NAME} no almacena mensajes. El servidor solo los reenvía en tiempo real y firma su sello.`}
               ok
             />
             <PrivacyRow
@@ -184,31 +299,23 @@ export default function AjustesPage() {
             />
             <PrivacyRow
               icon="⚠️"
-              text="El servidor ve tu dirección IP mientras estás conectado. No se guarda en logs."
+              text="El servidor ve tu dirección IP mientras estás conectado (no se guarda en logs)."
             />
             <PrivacyRow
               icon="⚠️"
-              text="Tu zona aproximada (nombre del barrio/sector) se comparte al unirte a un foro."
+              text="Tu zona aproximada se comparte al unirte a una sala para recibir mensajes de esa zona."
             />
           </div>
         </Section>
 
-        {/* ── Sección: Almacenamiento local ── */}
-        <Section title="Datos en este dispositivo">
-          <p className="text-slate-400 text-sm">
-            Los mensajes de los foros se guardan localmente en este dispositivo (IndexedDB).
-            En futuras versiones podrás ver el espacio usado y borrar copias aquí.
-          </p>
-        </Section>
-
         {/* ── Sección: Instalar PWA ── */}
         <Section title="Instalar la aplicación">
-          <p className="text-slate-400 text-sm mb-3">
-            Puedes instalar {APP_NAME} en tu dispositivo como una aplicación. Funciona sin conexión y carga más rápido.
+          <p className="text-slate-400 text-xs mb-2 leading-relaxed">
+            Puedes instalar {APP_NAME} en tu dispositivo como una aplicación web progresiva (PWA). Funciona sin conexión y carga al instante.
           </p>
-          <p className="text-slate-500 text-xs">
-            En iOS: Safari → Compartir → Añadir a pantalla de inicio.<br />
-            En Android: el navegador mostrará un aviso de instalación automáticamente.
+          <p className="text-slate-500 text-[11px] leading-relaxed">
+            • En iOS: Safari → Compartir → Añadir a pantalla de inicio.<br />
+            • En Android: el navegador mostrará un aviso de instalación automáticamente.
           </p>
         </Section>
       </div>
@@ -220,8 +327,8 @@ export default function AjustesPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface-1 rounded-2xl p-4">
-      <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3">{title}</h2>
+    <div className="bg-surface-1 rounded-2xl p-4 border border-surface-2/60">
+      <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">{title}</h2>
       {children}
     </div>
   );
@@ -229,9 +336,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3">
-      <span className="text-slate-400 text-sm flex-none">{label}</span>
-      <div className="text-right text-sm">{value}</div>
+    <div className="flex items-start justify-between gap-3 text-xs">
+      <span className="text-slate-400 flex-none">{label}</span>
+      <div className="text-right">{value}</div>
     </div>
   );
 }

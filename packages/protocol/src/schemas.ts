@@ -48,6 +48,19 @@ export const SyncChunkSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const PeerSyncRequestSchema = z.object({
+  requestId: z.string().min(1).max(64),
+  forumId: z.string().min(1).max(128),
+  since: z.number().int().min(0),
+});
+
+export const PeerSyncResponseSchema = z.object({
+  requestId: z.string().min(1).max(64),
+  forumId: z.string().min(1).max(128),
+  messages: z.array(MessageSchema),
+  hasMore: z.boolean(),
+});
+
 // ── Foros ─────────────────────────────────────────────────────────────
 
 export const JoinForumSchema = z.object({

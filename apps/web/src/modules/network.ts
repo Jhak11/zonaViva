@@ -1,12 +1,16 @@
 // ──────────────────────────────────────────────────────────────────────
 //  Módulo de red del cliente (apps/web/src/modules/network.ts)
 //  ÚNICO módulo que conoce e importa socket.io-client.
-//  Permite cambiar el transporte en el futuro sin modificar la UI.
+//  Permite cambiar el transporte en el futuro sin tocar la UI.
 // ──────────────────────────────────────────────────────────────────────
 import { io, Socket } from "socket.io-client";
 import type {
   MsgPayload,
   MsgSealedPayload,
+  SyncChunkPayload,
+  SyncUnavailablePayload,
+  PeerSyncRequestPayload,
+  PeerSyncResponsePayload,
 } from "@zonaviva/protocol";
 
 const RELAY_URL =
@@ -20,10 +24,16 @@ let relayPublicKey: string | null = null;
 type MessageListener = (msg: MsgSealedPayload) => void;
 type OccupancyListener = (data: { forumId: string; count: number }) => void;
 type ConnectionListener = (connected: boolean) => void;
+type SyncChunkListener = (payload: SyncChunkPayload) => void;
+type SyncUnavailableListener = (payload: SyncUnavailablePayload) => void;
+type PeerSyncRequestListener = (payload: PeerSyncRequestPayload) => void;
 
 const messageListeners = new Set<MessageListener>();
 const occupancyListeners = new Set<OccupancyListener>();
 const connectionListeners = new Set<ConnectionListener>();
+const syncChunkListeners = new Set<SyncChunkListener>();
+const syncUnavailableListeners = new Set<SyncUnavailableListener>();
+const peerSyncRequestListeners = new Set<PeerSyncRequestListener>();
 
 /**
  * Conecta al servidor Relay Socket.IO con reconexión automática.
@@ -67,6 +77,19 @@ export function connectNetwork(): Socket {
 
     socket.on("room_occupancy", (data: { forumId: string; count: number }) => {
       occupancyListeners.forEach((fn) => fn(data));
+    });
+
+    // Eventos de sincronización P2P
+    socket.on("sync_chunk", (payload: SyncChunkPayload) => {
+      syncChunkListeners.forEach((fn) => fn(payload));
+    });
+
+    socket.on("sync_unavailable", (payload: SyncUnavailablePayload) => {
+      syncUnavailableListeners.forEach((fn) => fn(payload));
+    });
+
+    socket.on("peer_sync_request", (payload: PeerSyncRequestPayload) => {
+      peerSyncRequestListeners.forEach((fn) => fn(payload));
     });
   } else if (!socket.connected) {
     socket.connect();
@@ -121,25 +144,59 @@ export function sendForumMessage(
 }
 
 /**
- * Registra un oyente para nuevos mensajes sellados.
+ * Solicita sincronización de historial para un foro desde una marca de tiempo 'since'
  */
+export function requestForumSync(forumId: string, since: number): void {
+  const s = connectNetwork();
+  s.emit("sync_request", { forumId, since });
+}
+
+/**
+ * Responde a una solicitud de sincronización enviada por otro par
+ */
+export function sendPeerSyncResponse(payload: PeerSyncResponsePayload): void {
+  if (socket?.connected) {
+    socket.emit("peer_sync_response", payload);
+  }
+}
+
+/**
+ * Notifica al relay que este cliente posee historial local para este foro
+ */
+export function reportHasHistory(forumId: string, count: number): void {
+  if (socket?.connected) {
+    socket.emit("report_has_history", { forumId, count });
+  }
+}
+
+// ── Registro de oyentes de eventos ────────────────────────────────────
+
 export function onMessageSealed(listener: MessageListener): () => void {
   messageListeners.add(listener);
   return () => messageListeners.delete(listener);
 }
 
-/**
- * Registra un oyente para cambios en la ocupación de salas.
- */
 export function onOccupancyChange(listener: OccupancyListener): () => void {
   occupancyListeners.add(listener);
   return () => occupancyListeners.delete(listener);
 }
 
-/**
- * Registra un oyente para estado de conexión.
- */
 export function onConnectionChange(listener: ConnectionListener): () => void {
   connectionListeners.add(listener);
   return () => connectionListeners.delete(listener);
+}
+
+export function onSyncChunk(listener: SyncChunkListener): () => void {
+  syncChunkListeners.add(listener);
+  return () => syncChunkListeners.delete(listener);
+}
+
+export function onSyncUnavailable(listener: SyncUnavailableListener): () => void {
+  syncUnavailableListeners.add(listener);
+  return () => syncUnavailableListeners.delete(listener);
+}
+
+export function onPeerSyncRequest(listener: PeerSyncRequestListener): () => void {
+  peerSyncRequestListeners.add(listener);
+  return () => peerSyncRequestListeners.delete(listener);
 }

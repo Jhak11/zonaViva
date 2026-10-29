@@ -1,11 +1,11 @@
 // ──────────────────────────────────────────────────────────────────────
-//  ZonaViva Relay – Iteración 2
+//  ZonaViva Relay – Iteración 3
 //  Servidor en memoria (sin base de datos, sin logs de IP ni contenido).
-//  Salas de foro geográfico, validación de esquemas Zod, sellado
-//  con marca de tiempo oficial (relayTs) y firma del relay.
+//  Salas de foro geográfico, sellado canónico (relayTs + relaySig)
+//  y retransmisión de sincronización P2P entre clientes.
 // ──────────────────────────────────────────────────────────────────────
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import crypto from "node:crypto";
 import {
   PROTOCOL_VERSION,
@@ -15,8 +15,12 @@ import {
   ZONES_BY_ID,
   MsgPayloadSchema,
   JoinForumSchema,
+  SyncRequestSchema,
+  PeerSyncResponseSchema,
   type MsgPayload,
   type MsgSealedPayload,
+  type PeerSyncRequestPayload,
+  type PeerSyncResponsePayload,
 } from "@zonaviva/protocol";
 
 const PORT = Number(process.env.PORT ?? 3001);
@@ -56,6 +60,17 @@ function getNextRelayTs(): number {
   return lastRelayTs;
 }
 
+// ── Rastreo de sincronizaciones pendientes en vuelo ────────────────────
+interface PendingSync {
+  requesterId: string;
+  forumId: string;
+  timeoutId: NodeJS.Timeout;
+}
+const pendingSyncs = new Map<string, PendingSync>();
+
+// Registro de sockets que han reportado tener copia local de un foro
+const forumHolders = new Map<string, Set<string>>(); // forumId -> Set<socketId>
+
 // ── Servidor HTTP ─────────────────────────────────────────────────────
 const httpServer = createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -91,10 +106,10 @@ const io = new Server(httpServer, {
     origin: CLIENT_ORIGIN,
     methods: ["GET", "POST"],
   },
-  maxHttpBufferSize: 8_192, // 8 KB
+  maxHttpBufferSize: 16_384, // 16 KB para chunks de sync
 });
 
-io.on("connection", (socket) => {
+io.on("connection", (socket: Socket) => {
   const ip =
     (socket.handshake.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
     socket.handshake.address;
@@ -108,7 +123,6 @@ io.on("connection", (socket) => {
   }
   connectionsByIp.set(ip, count);
 
-  // Registro de salas en las que está este socket
   const joinedRooms = new Set<string>();
 
   // Mensaje de bienvenida con clave pública del relay
@@ -143,8 +157,6 @@ io.on("connection", (socket) => {
     joinedRooms.add(forumId);
 
     const occupancy = io.sockets.adapter.rooms.get(forumId)?.size ?? 1;
-
-    // Notificar ocupación a todos los miembros de la sala
     io.to(forumId).emit("room_occupancy", { forumId, count: occupancy });
 
     if (typeof ack === "function") {
@@ -161,8 +173,21 @@ io.on("connection", (socket) => {
     socket.leave(forumId);
     joinedRooms.delete(forumId);
 
+    // Remover de holders
+    forumHolders.get(forumId)?.delete(socket.id);
+
     const occupancy = io.sockets.adapter.rooms.get(forumId)?.size ?? 0;
     io.to(forumId).emit("room_occupancy", { forumId, count: occupancy });
+  });
+
+  // ── Reportar posesión de historial local de un foro ─────────────────
+  socket.on("report_has_history", ({ forumId, count }: { forumId: string; count: number }) => {
+    if (typeof forumId === "string" && count > 0) {
+      if (!forumHolders.has(forumId)) {
+        forumHolders.set(forumId, new Set());
+      }
+      forumHolders.get(forumId)!.add(socket.id);
+    }
   });
 
   // ── Publicar mensaje ────────────────────────────────────────────────
@@ -176,14 +201,12 @@ io.on("connection", (socket) => {
 
     const data: MsgPayload = parsed.data;
 
-    // Verificar que el socket esté unido a la sala del foro
     if (!socket.rooms.has(data.forumId)) {
       socket.emit("error_msg", { message: "No estás unido a este foro." });
       if (typeof ack === "function") ack({ ok: false, error: "No unido al foro." });
       return;
     }
 
-    // Validar zona permanente
     if (data.forumId.startsWith(FORUM_PREFIX_ZONE)) {
       const zoneId = data.forumId.slice(FORUM_PREFIX_ZONE.length);
       if (!ZONES_BY_ID[zoneId]) {
@@ -193,7 +216,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    // Asignar marca de tiempo canónica y sellar con firma del relay
+    // Asignar marca canónica monotónica y firma del relay
     const relayTs = getNextRelayTs();
     const relaySig = signRelayMessage(data.id, data.forumId, relayTs, data.content);
 
@@ -203,11 +226,99 @@ io.on("connection", (socket) => {
       relaySig,
     };
 
-    // Fan-out a todos los miembros de la sala (incluyendo al autor)
+    // Difusión inmediata a todos los miembros de la sala
     io.to(data.forumId).emit("msg_sealed", sealed);
+
+    // El autor pasa a ser poseedor de historial
+    if (!forumHolders.has(data.forumId)) {
+      forumHolders.set(data.forumId, new Set());
+    }
+    forumHolders.get(data.forumId)!.add(socket.id);
 
     if (typeof ack === "function") {
       ack({ ok: true, relayTs, relaySig });
+    }
+  });
+
+  // ── Petición de Sincronización de Historial ──────────────────────────
+  socket.on("sync_request", (rawPayload: unknown) => {
+    const parsed = SyncRequestSchema.safeParse(rawPayload);
+    if (!parsed.success) {
+      socket.emit("sync_unavailable", { forumId: (rawPayload as { forumId?: string })?.forumId ?? "" });
+      return;
+    }
+
+    const { forumId, since } = parsed.data;
+
+    // Obtener miembros conectados a la sala excluyendo al solicitante
+    const room = io.sockets.adapter.rooms.get(forumId);
+    const candidateHolders = Array.from(forumHolders.get(forumId) ?? []).filter(
+      (id) => id !== socket.id && room?.has(id)
+    );
+
+    // Si nadie reportó historial pero hay otros sockets en la sala, probar con cualquiera
+    let peerId: string | null = null;
+    if (candidateHolders.length > 0) {
+      peerId = candidateHolders[Math.floor(Math.random() * candidateHolders.length)];
+    } else if (room) {
+      const otherMembers = Array.from(room).filter((id) => id !== socket.id);
+      if (otherMembers.length > 0) {
+        peerId = otherMembers[Math.floor(Math.random() * otherMembers.length)];
+      }
+    }
+
+    // Si no hay ningún par disponible en la sala
+    if (!peerId) {
+      socket.emit("sync_unavailable", { forumId });
+      return;
+    }
+
+    const requestId = crypto.randomUUID();
+
+    // Timeout de 4 segundos: si el par no responde, avisar que no está disponible
+    const timeoutId = setTimeout(() => {
+      const pending = pendingSyncs.get(requestId);
+      if (pending) {
+        pendingSyncs.delete(requestId);
+        io.to(pending.requesterId).emit("sync_unavailable", { forumId });
+      }
+    }, 4000);
+
+    pendingSyncs.set(requestId, {
+      requesterId: socket.id,
+      forumId,
+      timeoutId,
+    });
+
+    const requestPayload: PeerSyncRequestPayload = {
+      requestId,
+      forumId,
+      since,
+    };
+
+    io.to(peerId).emit("peer_sync_request", requestPayload);
+  });
+
+  // ── Respuesta de Sincronización proveniente de un par ───────────────
+  socket.on("peer_sync_response", (rawPayload: unknown) => {
+    const parsed = PeerSyncResponseSchema.safeParse(rawPayload);
+    if (!parsed.success) return;
+
+    const data: PeerSyncResponsePayload = parsed.data;
+    const pending = pendingSyncs.get(data.requestId);
+    if (!pending) return;
+
+    clearTimeout(pending.timeoutId);
+    pendingSyncs.delete(data.requestId);
+
+    if (data.messages && data.messages.length > 0) {
+      io.to(pending.requesterId).emit("sync_chunk", {
+        forumId: data.forumId,
+        messages: data.messages,
+        hasMore: data.hasMore,
+      });
+    } else {
+      io.to(pending.requesterId).emit("sync_unavailable", { forumId: data.forumId });
     }
   });
 
@@ -225,16 +336,25 @@ io.on("connection", (socket) => {
       connectionsByIp.set(ip, remaining);
     }
 
-    // Actualizar ocupación en las salas que abandonó
+    // Limpiar salas y holders
     for (const forumId of joinedRooms) {
+      forumHolders.get(forumId)?.delete(socket.id);
       const occupancy = io.sockets.adapter.rooms.get(forumId)?.size ?? 0;
       io.to(forumId).emit("room_occupancy", { forumId, count: occupancy });
     }
     joinedRooms.clear();
+
+    // Cancelar cualquier sync pendiente donde este socket era el solicitante
+    for (const [reqId, pending] of pendingSyncs.entries()) {
+      if (pending.requesterId === socket.id) {
+        clearTimeout(pending.timeoutId);
+        pendingSyncs.delete(reqId);
+      }
+    }
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`[${APP_NAME} relay] escuchando en puerto ${PORT}`);
-  console.log(`[${APP_NAME} relay] clave pública lista para verificación de firmas`);
+httpServer.listen(PORT, "0.0.0.0", () => {
+  console.log(`[${APP_NAME} relay] escuchando en 0.0.0.0 puerto ${PORT}`);
+  console.log(`[${APP_NAME} relay] clave pública y protocolo de sync P2P activos`);
 });
