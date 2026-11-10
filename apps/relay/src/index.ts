@@ -44,8 +44,52 @@ import {
   type TemporaryForum,
 } from "@zonaviva/protocol";
 
-const PORT = Number(process.env.PORT ?? 3001);
+const envPort = process.env.PORT ? parseInt(process.env.PORT.trim(), 10) : NaN;
+const PORT = !isNaN(envPort) && envPort > 0 ? envPort : 3001;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? "*";
+
+/**
+ * Parsea una clave privada en formato PEM o DER base64 de manera robusta,
+ * tolerando campos de formulario web que aplanan saltos de línea a espacios,
+ * comillas externas o secuencias \n escapadas.
+ */
+function parsePrivateKey(input: string): crypto.KeyObject {
+  let raw = input.trim();
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    raw = raw.slice(1, -1);
+  }
+
+  // 1. Reemplazar secuencias literales de \n
+  raw = raw.replace(/\\n/g, "\n").trim();
+
+  // 2. Si contiene cabeceras PEM pero los saltos de línea fueron reemplazados por espacios
+  const match = raw.match(/-----BEGIN [^-]+-----([\s\S]+)-----END [^-]+-----/);
+  if (match) {
+    const base64Body = match[1].replace(/\s+/g, "");
+    const formattedLines = base64Body.match(/.{1,64}/g)?.join("\n") || base64Body;
+    const reconstructedPem = `-----BEGIN PRIVATE KEY-----\n${formattedLines}\n-----END PRIVATE KEY-----`;
+    try {
+      return crypto.createPrivateKey(reconstructedPem);
+    } catch {
+      // Probar directamente con raw si falla la reconstrucción
+    }
+  }
+
+  // 3. Si viene como base64 puro sin cabeceras (DER PKCS#8)
+  if (!raw.includes("-----BEGIN")) {
+    try {
+      const derBuf = Buffer.from(raw.replace(/\s+/g, ""), "base64");
+      return crypto.createPrivateKey({ key: derBuf, format: "der", type: "pkcs8" });
+    } catch {
+      // Ignorar y probar método estándar
+    }
+  }
+
+  return crypto.createPrivateKey(raw);
+}
 
 // ── Clave de sellado ECDSA P-256 del relay (persistente o en memoria) ──
 function loadOrCreateRelayKeyPair(): {
@@ -55,15 +99,7 @@ function loadOrCreateRelayKeyPair(): {
   // 1. Variable de entorno (ideal para despliegues en la nube como Render, Railway o Fly.io)
   if (process.env.RELAY_PRIVATE_KEY_PEM) {
     try {
-      let rawPem = process.env.RELAY_PRIVATE_KEY_PEM.trim();
-      if (
-        (rawPem.startsWith('"') && rawPem.endsWith('"')) ||
-        (rawPem.startsWith("'") && rawPem.endsWith("'"))
-      ) {
-        rawPem = rawPem.slice(1, -1);
-      }
-      const pem = rawPem.replace(/\\n/g, "\n").trim();
-      const privateKey = crypto.createPrivateKey(pem);
+      const privateKey = parsePrivateKey(process.env.RELAY_PRIVATE_KEY_PEM);
       const publicKey = crypto.createPublicKey(privateKey);
       console.log("[Seguridad] Clave de sellado ECDSA cargada exitosamente desde RELAY_PRIVATE_KEY_PEM");
       return { privateKey, publicKey };
@@ -77,7 +113,7 @@ function loadOrCreateRelayKeyPair(): {
   if (fs.existsSync(keyPath)) {
     try {
       const pem = fs.readFileSync(keyPath, "utf-8");
-      const privateKey = crypto.createPrivateKey(pem);
+      const privateKey = parsePrivateKey(pem);
       const publicKey = crypto.createPublicKey(privateKey);
       console.log(`[Seguridad] Clave de sellado ECDSA cargada exitosamente desde archivo: ${keyPath}`);
       return { privateKey, publicKey };
