@@ -55,7 +55,15 @@ function loadOrCreateRelayKeyPair(): {
   // 1. Variable de entorno (ideal para despliegues en la nube como Render, Railway o Fly.io)
   if (process.env.RELAY_PRIVATE_KEY_PEM) {
     try {
-      const privateKey = crypto.createPrivateKey(process.env.RELAY_PRIVATE_KEY_PEM);
+      let rawPem = process.env.RELAY_PRIVATE_KEY_PEM.trim();
+      if (
+        (rawPem.startsWith('"') && rawPem.endsWith('"')) ||
+        (rawPem.startsWith("'") && rawPem.endsWith("'"))
+      ) {
+        rawPem = rawPem.slice(1, -1);
+      }
+      const pem = rawPem.replace(/\\n/g, "\n").trim();
+      const privateKey = crypto.createPrivateKey(pem);
       const publicKey = crypto.createPublicKey(privateKey);
       console.log("[Seguridad] Clave de sellado ECDSA cargada exitosamente desde RELAY_PRIVATE_KEY_PEM");
       return { privateKey, publicKey };

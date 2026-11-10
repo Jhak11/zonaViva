@@ -20,7 +20,6 @@ import { useEffect } from "react";
 import OfflineBanner from "@/components/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useForumStore } from "@/stores/forumStore";
-import { useGeoStore } from "@/stores/geoStore";
 import { useDirectChatStore } from "@/stores/directChatStore";
 
 export default function AppLayout() {
@@ -29,7 +28,6 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const initNetwork = useForumStore((s) => s.initNetwork);
   const myUserForums = useForumStore((s) => s.myUserForums);
-  const { simulatedZone, simulatedCoordinates, clearSimulation, isSimulating } = useGeoStore();
 
   const inAppNotification = useDirectChatStore((s) => s.inAppNotification);
   const clearInAppNotification = useDirectChatStore((s) => s.clearInAppNotification);
@@ -94,29 +92,6 @@ export default function AppLayout() {
 
       {/* Banner de sin conexión */}
       {!isOnline && <OfflineBanner />}
-
-      {/* Banner global de simulación de ubicación para pruebas */}
-      {isSimulating() && !location.pathname.startsWith("/foro") && (
-        <div className="bg-purple-900/90 border-b border-purple-500/50 text-purple-200 px-3.5 py-1.5 text-xs flex items-center justify-between z-40 backdrop-blur-md flex-none shadow-sm">
-          <div className="flex items-center gap-2 truncate">
-            <span className="text-sm">🧪</span>
-            <span className="truncate">
-              GPS Simulado (Pruebas):{" "}
-              <strong className="text-white">
-                {simulatedZone?.name || simulatedCoordinates?.name || "Ubicación fijada"}
-              </strong>
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={clearSimulation}
-            className="ml-2 text-[11px] bg-purple-500/30 hover:bg-purple-500/50 text-white px-2 py-0.5 rounded-lg font-semibold transition-colors flex-none"
-            title="Desactivar modo simulación y volver a GPS real"
-          >
-            Quitar
-          </button>
-        </div>
-      )}
 
       {/* Contenido principal */}
       <main className="flex-1 overflow-y-auto">

@@ -30,7 +30,6 @@ import {
   ClockIcon,
   CloudArrowUpIcon,
   TrashIcon,
-  BeakerIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ChatBubbleLeftEllipsisIcon,
@@ -42,12 +41,6 @@ export default function ForoPage() {
   const navigate = useNavigate();
 
   const {
-    simulatedZone,
-    simulatedCoordinates,
-    setSimulatedZone,
-    setSimulatedCoordinates,
-    clearSimulation,
-    isSimulating,
     userPosition,
     detectedZones,
     canPublishInZone,
@@ -123,11 +116,10 @@ export default function ForoPage() {
   }, [forumId, isUserForum, myUserForums, nearbyUserForums]);
 
   // Cálculo de presencia física según el tipo de foro:
-  // - Para zonas permanentes: estar dentro de la celda de la zona (o simulación activa)
-  // - Para foros de usuario: estar dentro del radio circular (con tolerancia GPS o simulación activa)
+  // - Para zonas permanentes: estar dentro de la celda de la zona (GPS real)
+  // - Para foros de usuario: estar dentro del radio circular (con tolerancia GPS)
   const isPhysicallyInside = useMemo(() => {
     if (isZoneForum) {
-      if (simulatedZone?.id === zoneId) return true;
       if (detectedZones.some((z) => z.id === zoneId)) return true;
       return canPublishInZone(zoneId);
     }
@@ -150,7 +142,6 @@ export default function ForoPage() {
     isZoneForum,
     isUserForum,
     zoneId,
-    simulatedZone,
     detectedZones,
     canPublishInZone,
     userForumMeta,
@@ -203,7 +194,7 @@ export default function ForoPage() {
       return;
     }
 
-    const physicalZoneToSend = isZoneForum ? zone : (simulatedZone ?? detectedZones[0] ?? null);
+    const physicalZoneToSend = isZoneForum ? zone : (detectedZones[0] ?? null);
     const res = await publishMessage(
       inputContent,
       session,
@@ -430,29 +421,6 @@ export default function ForoPage() {
         </div>
       </header>
 
-      {/* ── Banner de Simulación GPS Activa ── */}
-      {isSimulating() && (
-        <div className="flex items-center justify-between px-4 py-2 bg-purple-500/15 border-b border-purple-500/30 text-purple-200 text-xs flex-none animate-fade-in">
-          <div className="flex items-center gap-2 truncate">
-            <BeakerIcon className="w-4 h-4 text-purple-400 flex-none" />
-            <span className="truncate">
-              <strong>Modo Simulación activo:</strong> Presencia fijada en{" "}
-              <strong className="text-white">
-                {simulatedZone?.name || simulatedCoordinates?.name || "esta ubicación"}
-              </strong>
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={clearSimulation}
-            className="ml-2 px-2 py-0.5 rounded-lg bg-purple-500/25 hover:bg-purple-500/40 text-purple-200 text-[11px] font-semibold transition-colors flex-none"
-            title="Desactivar modo simulación"
-          >
-            Quitar
-          </button>
-        </div>
-      )}
-
       {/* ── Feed de Mensajes ── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && outboxMessages.length === 0 ? (
@@ -625,34 +593,6 @@ export default function ForoPage() {
             <p className="text-slate-400 text-xs max-w-md mx-auto">
               Debes encontrarte dentro del ámbito físico de <strong className="text-slate-200">{displayName}</strong> para poder enviar mensajes. Puedes continuar leyendo el chat como participante.
             </p>
-
-            {isZoneForum && zone && (
-              <button
-                type="button"
-                onClick={() => setSimulatedZone(zone)}
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-semibold hover:bg-purple-500/30 transition-colors active:scale-95 shadow-sm"
-              >
-                <BeakerIcon className="w-3.5 h-3.5 flex-none" />
-                <span>Simular presencia física en {zone.name} (Pruebas)</span>
-              </button>
-            )}
-
-            {isUserForum && userForumMeta?.latitude && userForumMeta?.longitude && (
-              <button
-                type="button"
-                onClick={() =>
-                  setSimulatedCoordinates({
-                    latitude: userForumMeta.latitude!,
-                    longitude: userForumMeta.longitude!,
-                    name: userForumMeta.name,
-                  })
-                }
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-semibold hover:bg-purple-500/30 transition-colors active:scale-95 shadow-sm"
-              >
-                <BeakerIcon className="w-3.5 h-3.5 flex-none" />
-                <span>Simular presencia física en este foro (Pruebas)</span>
-              </button>
-            )}
           </div>
         )}
       </footer>

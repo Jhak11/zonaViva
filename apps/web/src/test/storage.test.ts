@@ -273,4 +273,47 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
     const isDerValid = await verifyRelaySeal(pubSpkiB64, { ...msg, relaySig: derSig });
     expect(isDerValid).toBe(true);
   });
+
+  it("mensajes sellados antes de un reinicio siguen siendo válidos tras reiniciar el relay con la misma clave persistente", async () => {
+    const nodeCrypto = await import("node:crypto");
+    // Simulamos la clave persistente que se define en RELAY_PRIVATE_KEY_PEM
+    const masterKeyPair = nodeCrypto.generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+    const masterPem = masterKeyPair.privateKey.export({ type: "pkcs8", format: "pem" }) as string;
+
+    // "Sesión 1 del Relay": Carga la clave desde el PEM y sella un mensaje
+    const relay1Priv = nodeCrypto.createPrivateKey(masterPem);
+    const relay1Pub = nodeCrypto.createPublicKey(relay1Priv);
+    const relay1PubB64 = relay1Pub.export({ type: "spki", format: "der" }).toString("base64url");
+
+    const msg = {
+      id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
+      forumId: "zone:plaza-mayor",
+      relayTs: 1730000000000,
+      content: "Mensaje emitido en la sesión 1 del servidor",
+    };
+
+    const contentHash = nodeCrypto.createHash("sha256").update(msg.content).digest("hex");
+    const payloadToSign = `${msg.id}:${msg.forumId}:${msg.relayTs}:${contentHash}`;
+    const sig1 = nodeCrypto
+      .createSign("SHA256")
+      .update(payloadToSign)
+      .sign({ key: relay1Priv, dsaEncoding: "ieee-p1363" }, "base64url");
+
+    const sealedMsg = { ...msg, relaySig: sig1 };
+
+    // Verificamos que el cliente valida con el relay 1
+    expect(await verifyRelaySeal(relay1PubB64, sealedMsg)).toBe(true);
+
+    // "REINICIO DEL SERVIDOR RELAY": Se destruye la instancia 1 y se crea la instancia 2 cargando el mismo PEM
+    const relay2Priv = nodeCrypto.createPrivateKey(masterPem);
+    const relay2Pub = nodeCrypto.createPublicKey(relay2Priv);
+    const relay2PubB64 = relay2Pub.export({ type: "spki", format: "der" }).toString("base64url");
+
+    // Ambos relays tienen la misma clave pública
+    expect(relay2PubB64).toBe(relay1PubB64);
+
+    // El cliente nuevo o reconectado en la sesión 2 valida el mensaje histórico de la sesión 1:
+    const isValidAfterRestart = await verifyRelaySeal(relay2PubB64, sealedMsg);
+    expect(isValidAfterRestart).toBe(true);
+  });
 });

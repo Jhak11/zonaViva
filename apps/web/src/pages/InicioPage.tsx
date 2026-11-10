@@ -17,7 +17,6 @@ import {
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
   SparklesIcon,
-  BeakerIcon,
   BuildingStorefrontIcon,
   ShoppingCartIcon,
   BuildingLibraryIcon,
@@ -33,9 +32,6 @@ export default function InicioPage() {
     status,
     manualZone,
     setManualZone,
-    simulatedZone,
-    setSimulatedZone,
-    clearSimulation,
     requestPermission,
     effectiveZone: getEffectiveZone,
     userPosition,
@@ -47,9 +43,8 @@ export default function InicioPage() {
 
   const effectiveZone = getEffectiveZone();
   const isManual = Boolean(manualZone);
-  const isSimulated = Boolean(simulatedZone);
   const isPhysicallyInside = Boolean(
-    isSimulated || (effectiveZone && detectedZones.some((z) => z.id === effectiveZone.id))
+    effectiveZone && detectedZones.some((z) => z.id === effectiveZone.id)
   );
 
   return (
@@ -98,12 +93,7 @@ export default function InicioPage() {
           <div className="flex items-start justify-between gap-3 mb-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                {isSimulated ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
-                    Modo Simulación (publicación habilitada)
-                  </span>
-                ) : isPhysicallyInside ? (
+                {isPhysicallyInside ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Estás aquí (publicación habilitada{userPosition ? ` · ±${Math.round(userPosition.accuracy)}m` : ""})
@@ -124,7 +114,7 @@ export default function InicioPage() {
               </h2>
             </div>
 
-            {!userPosition && !isSimulated && (
+            {!userPosition && (
               <button
                 type="button"
                 onClick={() => requestPermission()}
@@ -136,37 +126,19 @@ export default function InicioPage() {
               </button>
             )}
 
-            {isSimulated ? (
-              <button
-                type="button"
-                onClick={clearSimulation}
-                className="text-xs text-purple-300 hover:text-white bg-purple-500/20 hover:bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-500/40 transition-colors flex items-center gap-1"
-                title="Desactivar modo simulación"
-              >
-                <span>✕</span>
-                <span>Quitar simulación</span>
-              </button>
-            ) : isManual && effectiveZone ? (
+            {isManual && effectiveZone && (
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setSimulatedZone(effectiveZone)}
-                  className="text-xs text-purple-300 hover:text-white bg-purple-500/20 hover:bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-500/40 transition-colors flex items-center gap-1.5"
-                  title="Simular estar aquí para probar publicaciones"
-                >
-                  <BeakerIcon className="w-3.5 h-3.5 text-purple-400 flex-none" />
-                  <span>Simular estar aquí</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => setManualZone(null)}
-                  className="text-xs text-slate-400 hover:text-white bg-surface-2/70 px-2.5 py-1 rounded-lg border border-surface-2 transition-colors"
+                  className="text-xs text-slate-300 hover:text-white bg-surface-2/90 hover:bg-surface-2 px-2.5 py-1.5 rounded-lg border border-surface-3 transition-colors flex items-center gap-1"
                   title="Volver a mi GPS"
                 >
-                  ✕
+                  <span>✕</span>
+                  <span>Volver a mi ubicación</span>
                 </button>
               </div>
-            ) : null}
+            )}
           </div>
 
           <p className="text-slate-300/80 text-xs leading-relaxed mb-4">
@@ -388,10 +360,6 @@ export default function InicioPage() {
           selected={effectiveZone}
           onSelect={(zone) => {
             setManualZone(zone);
-            setShowZoneSelector(false);
-          }}
-          onSimulate={(zone) => {
-            setSimulatedZone(zone);
             setShowZoneSelector(false);
           }}
           onClose={() => setShowZoneSelector(false)}

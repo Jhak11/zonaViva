@@ -75,7 +75,6 @@ export default function ChatPage() {
     manualZone, 
     userPosition,
     detectedZones,
-    simulatedZone,
     canPublishInZone,
   } = useGeoStore();
   const { myUserForums, nearbyUserForums, fetchNearbyUserForums } = useForumStore();
@@ -170,7 +169,6 @@ export default function ChatPage() {
       const zone = ZONES.find((z) => z.id === scopeId);
       if (zone) {
         const isPresent =
-          simulatedZone?.id === zone.id ||
           detectedZones.some((z) => z.id === zone.id) ||
           canPublishInZone(zone.id);
         const isSubscribed = myUserForums.some(
@@ -207,7 +205,6 @@ export default function ChatPage() {
     return relevant;
   }, [
     activeScopes,
-    simulatedZone,
     detectedZones,
     canPublishInZone,
     myUserForums,

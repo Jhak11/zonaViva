@@ -7,11 +7,10 @@ interface ZoneSelectorProps {
   zones: Zone[];
   selected: Zone | null;
   onSelect: (zone: Zone) => void;
-  onSimulate?: (zone: Zone) => void;
   onClose: () => void;
 }
 
-export default function ZoneSelector({ zones, selected, onSelect, onSimulate, onClose }: ZoneSelectorProps) {
+export default function ZoneSelector({ zones, selected, onSelect, onClose }: ZoneSelectorProps) {
   return (
     // Backdrop
     <div
@@ -25,7 +24,7 @@ export default function ZoneSelector({ zones, selected, onSelect, onSimulate, on
       >
         <div className="w-12 h-1 bg-surface-2 rounded-full mx-auto mb-5" />
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white">Explorar o Simular Zona</h2>
+          <h2 className="text-lg font-bold text-white">Explorar Zonas de Puno</h2>
           <span className="text-[11px] text-slate-400">Puno MVP</span>
         </div>
 
@@ -60,23 +59,6 @@ export default function ZoneSelector({ zones, selected, onSelect, onSimulate, on
                   <span className="text-[10px] text-slate-500 mt-0.5 block">{zone.cells.length} celdas contiguas</span>
                 </div>
               </div>
-
-              {onSimulate && (
-                <div className="mt-2 pt-2 border-t border-surface-2/60 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-500">¿Deseas probar publicaciones?</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSimulate(zone);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
-                  >
-                    <span>🧪</span>
-                    <span>Simular presencia aquí</span>
-                  </button>
-                </div>
-              )}
             </div>
           ))}
         </div>

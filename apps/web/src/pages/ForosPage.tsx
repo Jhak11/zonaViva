@@ -34,7 +34,6 @@ export default function ForosPage() {
   const [activeTab, setActiveTab] = useState<Tab>("zonas");
   const { 
     detectedZones, 
-    simulatedZone, 
     canPublishInZone, 
     userPosition 
   } = useGeoStore();
@@ -194,7 +193,6 @@ export default function ForosPage() {
             {ZONES.map((zone) => {
               const forumId = `zone:${zone.id}`;
               const isHere = Boolean(
-                simulatedZone?.id === zone.id ||
                 detectedZones.some((z) => z.id === zone.id) ||
                 canPublishInZone(zone.id)
               );
@@ -448,7 +446,6 @@ export default function ForosPage() {
 
                     const isInside = isZone
                       ? Boolean(
-                          simulatedZone?.id === targetZoneId ||
                           detectedZones.some((z) => z.id === targetZoneId) ||
                           canPublishInZone(targetZoneId)
                         )
