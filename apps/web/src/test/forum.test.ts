@@ -8,7 +8,7 @@ describe("Iteración 2 – Reglas de Foros Geográficos", () => {
     const rawMessages: Message[] = [
       {
         id: "01JBP8R3D6V7M4W0Q5G9S8T7Y3",
-        forumId: "zone:puno-laureles",
+        forumId: "zone:mercado-central",
         alias: "Usuario3",
         authorKey: "key3",
         content: "Mensaje 3 con relayTs posterior",
@@ -19,7 +19,7 @@ describe("Iteración 2 – Reglas de Foros Geográficos", () => {
       },
       {
         id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
-        forumId: "zone:puno-laureles",
+        forumId: "zone:mercado-central",
         alias: "Usuario1",
         authorKey: "key1",
         content: "Mensaje 1 inicial",
@@ -30,7 +30,7 @@ describe("Iteración 2 – Reglas de Foros Geográficos", () => {
       },
       {
         id: "01JBP8R3D6V7M4W0Q5G9S8T7Y2",
-        forumId: "zone:puno-laureles",
+        forumId: "zone:mercado-central",
         alias: "Usuario2",
         authorKey: "key2",
         content: "Mensaje 2 intermedio",
@@ -53,9 +53,9 @@ describe("Iteración 2 – Reglas de Foros Geográficos", () => {
   });
 
   it("authorizes publishing only when physical GPS zone matches forum zone", () => {
-    const physicalZone: Zone = ZONES_BY_ID["puno-laureles"]!;
-    const targetForumInside = "zone:puno-laureles";
-    const targetForumOutside = "zone:puno-centro";
+    const physicalZone: Zone = ZONES_BY_ID["plaza-mayor"]!;
+    const targetForumInside = "zone:plaza-mayor";
+    const targetForumOutside = "zone:mercado-central";
 
     function canPublishInForum(forumId: string, currentPhysicalZone: Zone | null): boolean {
       if (!currentPhysicalZone) return false;
@@ -80,6 +80,36 @@ describe("Iteración 2 – Reglas de Foros Geográficos", () => {
 
     const verified = await verifySignature(session.publicKey, content, sig);
     expect(verified).toBe(true);
+  });
+
+  it("rejects message with tampered content (Zero-Trust client verification)", async () => {
+    const session = await generateSession();
+    const originalContent = "Contenido legítimo del autor";
+    const sig = await signMessage(session.privateKey, originalContent);
+
+    const tamperedContent = "Contenido adulterado por un intermediario malicioso";
+    const verified = await verifySignature(session.publicKey, tamperedContent, sig);
+    expect(verified).toBe(false);
+  });
+
+  it("rejects message with tampered or forged author signature", async () => {
+    const session = await generateSession();
+    const content = "Mensaje sin alteraciones";
+
+    const forgedSig = "MEUCIQC8z8fakeSignatureThatIsAlteredAndInvalid1234567890=";
+    const verified = await verifySignature(session.publicKey, content, forgedSig);
+    expect(verified).toBe(false);
+  });
+
+  it("rejects impersonation when authorKey does not match the signing key", async () => {
+    const legitimateUser = await generateSession();
+    const attacker = await generateSession();
+    const content = "Mensaje falso que finge ser del usuario legítimo";
+
+    // El atacante firma con su propia clave privada pero envía la clave pública de la víctima
+    const attackerSig = await signMessage(attacker.privateKey, content);
+    const verified = await verifySignature(legitimateUser.publicKey, content, attackerSig);
+    expect(verified).toBe(false);
   });
 
   it("checks maximum message length limit of 1000 characters", () => {

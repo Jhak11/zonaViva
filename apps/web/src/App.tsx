@@ -2,11 +2,13 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useIdentityStore } from "@/stores/identityStore";
 import { useGeoStore } from "@/stores/geoStore";
+import { useDirectChatStore } from "@/stores/directChatStore";
 
 // Vistas
 import BienvenidaPage from "@/pages/BienvenidaPage";
 import InicioPage from "@/pages/InicioPage";
 import ForosPage from "@/pages/ForosPage";
+import CrearForoPage from "@/pages/CrearForoPage";
 import ForoPage from "@/pages/ForoPage";
 import ChatPage from "@/pages/ChatPage";
 import AjustesPage from "@/pages/AjustesPage";
@@ -18,18 +20,20 @@ import AppLayout from "@/layouts/AppLayout";
 export default function App() {
   const { session, isOnboardingCompleted, isReady, initSession } = useIdentityStore();
   const { startWatching } = useGeoStore();
+  const initDirectStore = useDirectChatStore((s) => s.initDirectStore);
 
   // Inicializar estado de sesión y onboarding al arrancar
   useEffect(() => {
     initSession();
   }, [initSession]);
 
-  // Si ya hay sesión activa, iniciar GPS
+  // Si ya hay sesión activa, iniciar GPS y canal de mensajería directa
   useEffect(() => {
     if (session) {
       startWatching();
+      initDirectStore();
     }
-  }, [session, startWatching]);
+  }, [session, startWatching, initDirectStore]);
 
   // Pantalla de carga mientras se recupera estado de localStorage
   if (!isReady) {
@@ -65,6 +69,12 @@ export default function App() {
           path="/foros"
           element={
             isOnboardingCompleted ? <ForosPage /> : <Navigate to="/bienvenida" replace />
+          }
+        />
+        <Route
+          path="/foros/nuevo"
+          element={
+            isOnboardingCompleted ? <CrearForoPage /> : <Navigate to="/bienvenida" replace />
           }
         />
         <Route

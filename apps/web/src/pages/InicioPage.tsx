@@ -17,20 +17,40 @@ import {
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
   SparklesIcon,
+  BeakerIcon,
+  BuildingStorefrontIcon,
+  ShoppingCartIcon,
+  BuildingLibraryIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 
 // Carga diferida del mapa
 const ZoneMap = lazy(() => import("@/components/ZoneMap"));
 
 export default function InicioPage() {
-  const { permission, status, currentZone, manualZone, setManualZone } = useGeoStore();
+  const {
+    permission,
+    status,
+    manualZone,
+    setManualZone,
+    simulatedZone,
+    setSimulatedZone,
+    clearSimulation,
+    requestPermission,
+    effectiveZone: getEffectiveZone,
+    userPosition,
+    detectedZones,
+  } = useGeoStore();
   const { session } = useIdentityStore();
   const [showZoneSelector, setShowZoneSelector] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
 
-  const effectiveZone = manualZone ?? currentZone;
+  const effectiveZone = getEffectiveZone();
   const isManual = Boolean(manualZone);
-  const isPhysicallyInside = Boolean(currentZone && currentZone.id === effectiveZone?.id);
+  const isSimulated = Boolean(simulatedZone);
+  const isPhysicallyInside = Boolean(
+    isSimulated || (effectiveZone && detectedZones.some((z) => z.id === effectiveZone.id))
+  );
 
   return (
     <div className="min-h-full bg-surface-0 pb-12">
@@ -39,7 +59,7 @@ export default function InicioPage() {
         <header className="flex items-center justify-between mb-4 pt-safe">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
-              <span className="text-lg">📍</span>
+              <MapPinIcon className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -78,10 +98,15 @@ export default function InicioPage() {
           <div className="flex items-start justify-between gap-3 mb-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                {isPhysicallyInside ? (
+                {isSimulated ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                    Modo Simulación (publicación habilitada)
+                  </span>
+                ) : isPhysicallyInside ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Estás aquí (publicación habilitada)
+                    Estás aquí (publicación habilitada{userPosition ? ` · ±${Math.round(userPosition.accuracy)}m` : ""})
                   </span>
                 ) : isManual ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -99,15 +124,49 @@ export default function InicioPage() {
               </h2>
             </div>
 
-            {isManual && (
+            {!userPosition && !isSimulated && (
               <button
-                onClick={() => setManualZone(null)}
-                className="text-xs text-slate-400 hover:text-white bg-surface-2/70 px-2.5 py-1 rounded-lg border border-surface-2 transition-colors flex items-center gap-1"
-                title="Volver a mi GPS"
+                type="button"
+                onClick={() => requestPermission()}
+                className="text-xs text-emerald-300 hover:text-white bg-emerald-500/20 hover:bg-emerald-500/30 px-3 py-1.5 rounded-xl border border-emerald-500/40 transition-all flex items-center gap-1.5 active:scale-95 shadow-sm flex-none font-semibold"
+                title="Volver a solicitar permisos y activar GPS"
               >
-                Volver al GPS
+                <MapPinIcon className="w-3.5 h-3.5 text-emerald-400 flex-none" />
+                <span>Activar GPS</span>
               </button>
             )}
+
+            {isSimulated ? (
+              <button
+                type="button"
+                onClick={clearSimulation}
+                className="text-xs text-purple-300 hover:text-white bg-purple-500/20 hover:bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-500/40 transition-colors flex items-center gap-1"
+                title="Desactivar modo simulación"
+              >
+                <span>✕</span>
+                <span>Quitar simulación</span>
+              </button>
+            ) : isManual && effectiveZone ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSimulatedZone(effectiveZone)}
+                  className="text-xs text-purple-300 hover:text-white bg-purple-500/20 hover:bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-500/40 transition-colors flex items-center gap-1.5"
+                  title="Simular estar aquí para probar publicaciones"
+                >
+                  <BeakerIcon className="w-3.5 h-3.5 text-purple-400 flex-none" />
+                  <span>Simular estar aquí</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManualZone(null)}
+                  className="text-xs text-slate-400 hover:text-white bg-surface-2/70 px-2.5 py-1 rounded-lg border border-surface-2 transition-colors"
+                  title="Volver a mi GPS"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <p className="text-slate-300/80 text-xs leading-relaxed mb-4">
@@ -215,31 +274,61 @@ export default function InicioPage() {
           <div className="grid grid-cols-2 gap-2">
             {ZONES.map((zone) => {
               const isSelected = effectiveZone?.id === zone.id;
-              const isTestZone = zone.id === "puno-laureles";
+              const isDetected = detectedZones.some((z) => z.id === zone.id);
+              const renderZoneIcon = () => {
+                const cls = "w-4 h-4 text-brand-400 flex-none";
+                switch (zone.id) {
+                  case "mercado-central":
+                  case "mercado-union":
+                    return <BuildingStorefrontIcon className={cls} />;
+                  case "mercado-bellavista":
+                    return <ShoppingCartIcon className={cls} />;
+                  case "plaza-mayor":
+                    return <BuildingLibraryIcon className={cls} />;
+                  case "unap-campus":
+                    return <AcademicCapIcon className={cls} />;
+                  default:
+                    return <MapPinIcon className={cls} />;
+                }
+              };
 
               return (
                 <button
                   key={zone.id}
                   onClick={() => setManualZone(zone)}
                   className={`flex flex-col text-left p-3 rounded-xl border transition-all ${
-                    isSelected
+                    isDetected
+                      ? "bg-emerald-500/15 border-emerald-500/50 shadow-md shadow-emerald-500/10"
+                      : isSelected
                       ? "bg-brand-500/15 border-brand-500/50 shadow-md shadow-brand-500/10"
                       : "bg-surface-1 border-surface-2 hover:border-surface-2/80 hover:bg-surface-1/80"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-base">{isTestZone ? "🧪" : "📍"}</span>
-                    {isSelected && (
-                      <span className="text-[10px] font-bold text-brand-400 bg-brand-400/10 px-1.5 py-0.5 rounded">
-                        Activa
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      {renderZoneIcon()}
+                      <span
+                        className="w-2 h-2 rounded-full inline-block"
+                        style={{ backgroundColor: zone.color || "#0284c7" }}
+                        title={`Color de zona: ${zone.color}`}
+                      />
+                    </div>
+                    {isDetected ? (
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/15 px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        En zona
                       </span>
-                    )}
+                    ) : isSelected ? (
+                      <span className="text-[10px] font-bold text-brand-400 bg-brand-400/10 px-1.5 py-0.5 rounded">
+                        Explorando
+                      </span>
+                    ) : null}
                   </div>
                   <span className="text-xs font-semibold text-white truncate w-full">
                     {zone.name}
                   </span>
                   <span className="text-[10px] text-slate-400 truncate w-full">
-                    {zone.type === "circle" ? `Radio: ${zone.radiusMeters}m` : "Polígono"}
+                    {zone.cells.length} celdas
                   </span>
                 </button>
               );
@@ -299,6 +388,10 @@ export default function InicioPage() {
           selected={effectiveZone}
           onSelect={(zone) => {
             setManualZone(zone);
+            setShowZoneSelector(false);
+          }}
+          onSimulate={(zone) => {
+            setSimulatedZone(zone);
             setShowZoneSelector(false);
           }}
           onClose={() => setShowZoneSelector(false)}

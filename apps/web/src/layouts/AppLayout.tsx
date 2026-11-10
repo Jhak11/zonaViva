@@ -1,12 +1,14 @@
 // ──────────────────────────────────────────────────────────────────────
 //  Layout principal con barra de navegación inferior (mobile-first)
 // ──────────────────────────────────────────────────────────────────────
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   MapIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   SparklesIcon,
   Cog6ToothIcon,
+  BellAlertIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import {
   MapIcon as MapIconSolid,
@@ -14,19 +16,107 @@ import {
   SparklesIcon as SparklesIconSolid,
   Cog6ToothIcon as CogIconSolid,
 } from "@heroicons/react/24/solid";
+import { useEffect } from "react";
 import OfflineBanner from "@/components/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useForumStore } from "@/stores/forumStore";
+import { useGeoStore } from "@/stores/geoStore";
+import { useDirectChatStore } from "@/stores/directChatStore";
 
 export default function AppLayout() {
   const isOnline = useOnlineStatus();
   const location = useLocation();
+  const navigate = useNavigate();
+  const initNetwork = useForumStore((s) => s.initNetwork);
+  const myUserForums = useForumStore((s) => s.myUserForums);
+  const { simulatedZone, simulatedCoordinates, clearSimulation, isSimulating } = useGeoStore();
+
+  const inAppNotification = useDirectChatStore((s) => s.inAppNotification);
+  const clearInAppNotification = useDirectChatStore((s) => s.clearInAppNotification);
+  const requests = useDirectChatStore((s) => s.requests);
+  const unreadTotal = useDirectChatStore((s) => s.unreadTotal);
+
+  useEffect(() => {
+    initNetwork();
+  }, [initNetwork]);
+
+  // Auto-descartar la notificación in-app tras 6 segundos
+  useEffect(() => {
+    if (inAppNotification) {
+      const timer = setTimeout(() => {
+        clearInAppNotification();
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [inAppNotification, clearInAppNotification]);
+
+  const handleToastClick = () => {
+    clearInAppNotification();
+    navigate("/chat?tab=requests");
+  };
 
   const isForosActive = location.pathname.startsWith("/foro");
+  const pendingIncomingCount = requests.filter(
+    (r) => r.direction === "incoming" && r.status === "pending"
+  ).length;
+  const totalChatBadge = pendingIncomingCount + unreadTotal;
+  const totalForumsUnread = myUserForums.reduce((sum, f) => sum + (f.unreadCount || 0), 0);
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-surface-0">
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-surface-0 relative">
+      {/* Notificación flotante In-App de solicitud o mensaje directo */}
+      {inAppNotification && (
+        <div className="fixed top-3 left-4 right-4 z-50 max-w-md mx-auto animate-fade-in">
+          <div className="bg-surface-1/95 border border-purple-500/50 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md flex items-start gap-3 ring-1 ring-purple-500/20">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center flex-none">
+              <BellAlertIcon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={handleToastClick}>
+              <h4 className="text-xs font-bold text-white truncate">{inAppNotification.title}</h4>
+              <p className="text-[11px] text-slate-300 mt-0.5 line-clamp-2 leading-snug">
+                {inAppNotification.message}
+              </p>
+              <div className="mt-1.5 flex items-center gap-1 text-[10px] text-purple-400 font-semibold">
+                <span>Ver solicitudes</span>
+                <span>&rarr;</span>
+              </div>
+            </div>
+            <button
+              onClick={clearInAppNotification}
+              className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+              title="Descartar"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Banner de sin conexión */}
       {!isOnline && <OfflineBanner />}
+
+      {/* Banner global de simulación de ubicación para pruebas */}
+      {isSimulating() && !location.pathname.startsWith("/foro") && (
+        <div className="bg-purple-900/90 border-b border-purple-500/50 text-purple-200 px-3.5 py-1.5 text-xs flex items-center justify-between z-40 backdrop-blur-md flex-none shadow-sm">
+          <div className="flex items-center gap-2 truncate">
+            <span className="text-sm">🧪</span>
+            <span className="truncate">
+              GPS Simulado (Pruebas):{" "}
+              <strong className="text-white">
+                {simulatedZone?.name || simulatedCoordinates?.name || "Ubicación fijada"}
+              </strong>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={clearSimulation}
+            className="ml-2 text-[11px] bg-purple-500/30 hover:bg-purple-500/50 text-white px-2 py-0.5 rounded-lg font-semibold transition-colors flex-none"
+            title="Desactivar modo simulación y volver a GPS real"
+          >
+            Quitar
+          </button>
+        </div>
+      )}
 
       {/* Contenido principal */}
       <main className="flex-1 overflow-y-auto">
@@ -43,12 +133,14 @@ export default function AppLayout() {
             OutlineIcon={ChatBubbleOvalLeftEllipsisIcon}
             SolidIcon={ChatIconSolid}
             forceActive={isForosActive}
+            badge={totalForumsUnread}
           />
           <NavItem
             to="/chat"
             label="Chat 1:1"
             OutlineIcon={SparklesIcon}
             SolidIcon={SparklesIconSolid}
+            badge={totalChatBadge}
           />
           <NavItem to="/ajustes" label="Ajustes" OutlineIcon={Cog6ToothIcon} SolidIcon={CogIconSolid} />
         </div>
@@ -64,16 +156,17 @@ interface NavItemProps {
   OutlineIcon: React.ElementType;
   SolidIcon: React.ElementType;
   forceActive?: boolean;
+  badge?: number;
 }
 
-function NavItem({ to, label, OutlineIcon, SolidIcon, forceActive }: NavItemProps) {
+function NavItem({ to, label, OutlineIcon, SolidIcon, forceActive, badge }: NavItemProps) {
   return (
     <NavLink
       to={to}
       end={to === "/"}
       className={({ isActive }) => {
         const active = forceActive ?? isActive;
-        return `flex flex-col items-center gap-0.5 py-2 px-4 rounded-xl transition-colors ${
+        return `flex flex-col items-center gap-0.5 py-2 px-4 rounded-xl transition-colors relative ${
           active
             ? "text-brand-400 font-semibold"
             : "text-slate-400 hover:text-slate-200"
@@ -84,7 +177,14 @@ function NavItem({ to, label, OutlineIcon, SolidIcon, forceActive }: NavItemProp
         const active = forceActive ?? isActive;
         return (
           <>
-            {active ? <SolidIcon className="w-6 h-6" /> : <OutlineIcon className="w-6 h-6" />}
+            <div className="relative">
+              {active ? <SolidIcon className="w-6 h-6" /> : <OutlineIcon className="w-6 h-6" />}
+              {badge !== undefined && badge > 0 && (
+                <span className="absolute -top-1 -right-2 bg-purple-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-md border border-surface-1 animate-pulse">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
+            </div>
             <span className="text-[10px]">{label}</span>
           </>
         );

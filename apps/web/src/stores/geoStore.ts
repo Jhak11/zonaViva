@@ -3,107 +3,173 @@
 // ──────────────────────────────────────────────────────────────────────
 import { create } from "zustand";
 import type { Zone } from "@zonaviva/protocol";
-import { detectZone } from "@/modules/geo";
+import { 
+  startWatchingPosition, 
+  stopWatchingPosition, 
+  getLocationServiceStatus,
+  requestLocationPermission,
+  type LocationServiceStatus 
+} from "@/geo/locationService";
+import { 
+  getAccessibleZones, 
+  getUserCells,
+  canPublishInZoneForum,
+  type UserPosition 
+} from "@/geo/accessPolicy";
+import { decodeGeohash } from "@/geo/geoCore";
+import { getZoneCenter } from "@/geo/zoneCatalog";
 
 export type GeoPermission = "granted" | "denied" | "prompt" | "unavailable";
-export type GeoStatus =
-  | "idle"
-  | "requesting"
-  | "watching"
-  | "error"
-  | "unavailable";
+export type AccuracyLevel = "good" | "acceptable" | "poor";
 
 interface GeoState {
   /** Permiso del navegador */
   permission: GeoPermission;
-  /** Estado interno del watcher */
-  status: GeoStatus;
-  /** Zona detectada por GPS (null si fuera de todas las zonas) */
-  currentZone: Zone | null;
-  /** Zona seleccionada manualmente para explorar (sobrescribe currentZone en lectura) */
+  /** Estado del servicio de ubicación */
+  status: LocationServiceStatus;
+  /** Posición actual del usuario con precisión y timestamp */
+  userPosition: UserPosition | null;
+  /** Celdas que toca el círculo de precisión del usuario */
+  userCells: string[];
+  /** Zonas detectadas (donde el usuario puede publicar) */
+  detectedZones: Zone[];
+  /** Zona seleccionada manualmente para explorar */
   manualZone: Zone | null;
   /** Zona simulada para pruebas locales de desarrollo */
   simulatedZone: Zone | null;
+  /** Coordenadas simuladas personalizadas (ej. foros temporales circulares) */
+  simulatedCoordinates: { latitude: number; longitude: number; name?: string } | null;
   /** Mensaje de error descriptivo */
   error: string | null;
-  /** ID del watchPosition para poder limpiar */
-  watchId: number | null;
+  /** Modo "Centrar en mí" (el mapa sigue la posición del usuario) */
+  followUserPosition: boolean;
 
   /** Inicia el watch de GPS */
   startWatching: () => void;
   /** Para el watch */
   stopWatching: () => void;
+  /** Solicita explícitamente permisos de geolocalización al navegador */
+  requestPermission: () => Promise<boolean>;
   /** Seleccionar zona manualmente (modo exploración) */
   setManualZone: (zone: Zone | null) => void;
-  /** Simular ubicación GPS para pruebas de proximidad */
+  /** Simular ubicación GPS en una zona para pruebas de proximidad */
   setSimulatedZone: (zone: Zone | null) => void;
-  /** Zona efectiva: manual si está definida, si no la del GPS */
+  /** Simular coordenadas GPS específicas (para foros de usuario u otras ubicaciones) */
+  setSimulatedCoordinates: (coords: { latitude: number; longitude: number; name?: string } | null) => void;
+  /** Quitar cualquier simulación activa y reactivar GPS real */
+  clearSimulation: () => void;
+  /** Comprueba si el modo simulación está actualmente activo */
+  isSimulating: () => boolean;
+  /** Activar/desactivar modo "Centrar en mí" */
+  setFollowUserPosition: (follow: boolean) => void;
+  /** Alternar modo "Centrar en mí" */
+  toggleFollowUser: () => void;
+  /** Centrar en la posición del usuario */
+  centerOnUser: () => void;
+  /** Zona efectiva: simulada si existe, si no manual, si no la detectada */
   effectiveZone: () => Zone | null;
+  /** Consulta si el usuario puede publicar en una zona específica */
+  canPublishInZone: (zoneId: string) => boolean;
+  /** Obtiene el nivel de precisión cualitativo */
+  getAccuracyLevel: () => AccuracyLevel | null;
 }
 
 export const useGeoStore = create<GeoState>((set, get) => ({
   permission: "prompt",
-  status: "idle",
-  currentZone: null,
+  status: "inactive",
+  userPosition: null,
+  userCells: [],
+  detectedZones: [],
   manualZone: null,
   simulatedZone: null,
+  simulatedCoordinates: null,
   error: null,
-  watchId: null,
+  followUserPosition: false,
 
   startWatching: () => {
-    // Si hay una zona simulada activa, no sobrescribir
-    if (get().simulatedZone) {
+    // Si hay una simulación activa, no iniciar GPS real que la sobreescriba
+    if (get().simulatedZone || get().simulatedCoordinates) {
       set({
         permission: "granted",
-        status: "watching",
-        currentZone: get().simulatedZone,
+        status: "active",
+        error: null,
       });
       return;
     }
 
-    if (!navigator.geolocation) {
-      set({ permission: "unavailable", status: "unavailable" });
-      return;
-    }
+    startWatchingPosition(
+      (position) => {
+        // Si se activó una simulación mientras llegaba la actualización, ignorar
+        if (get().simulatedZone || get().simulatedCoordinates) return;
 
-    set({ status: "requesting" });
-
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        if (get().simulatedZone) return;
-        const { latitude, longitude } = pos.coords;
-        const zone = detectZone(latitude, longitude);
+        // Calcular celdas y zonas desde la nueva posición
+        const cells = getUserCells(position);
+        const zones = getAccessibleZones(position);
+        
         set({
-          status: "watching",
+          status: getLocationServiceStatus(),
           permission: "granted",
-          currentZone: zone,
+          userPosition: position,
+          userCells: cells,
+          detectedZones: zones,
           error: null,
         });
       },
-      (err) => {
-        if (get().simulatedZone) return;
-        if (err.code === GeolocationPositionError.PERMISSION_DENIED) {
-          set({ permission: "denied", status: "error", error: "Permiso de ubicación denegado." });
-        } else {
-          set({ status: "error", error: "No se pudo obtener la ubicación." });
+      (error) => {
+        if (get().simulatedZone || get().simulatedCoordinates) return;
+
+        const status = getLocationServiceStatus();
+        
+        let errorMessage = "Error al obtener ubicación";
+        if (error.code === error.PERMISSION_DENIED) {
+          set({ permission: "denied" });
+          errorMessage = "Permiso de ubicación denegado";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          errorMessage = "Ubicación no disponible";
+        } else if (error.code === error.TIMEOUT) {
+          errorMessage = "Timeout al obtener ubicación";
         }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15_000,
-        maximumAge: 30_000,
+        
+        set({ 
+          status,
+          error: errorMessage
+        });
       }
     );
-
-    set({ watchId });
   },
 
   stopWatching: () => {
-    const { watchId } = get();
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
+    stopWatchingPosition();
+    set({ 
+      status: "inactive",
+      userPosition: null,
+      userCells: [],
+      detectedZones: [],
+      error: null
+    });
+  },
+
+  requestPermission: async () => {
+    // Si hay simulación, quitarla primero para volver a GPS real
+    if (get().simulatedZone || get().simulatedCoordinates) {
+      get().clearSimulation();
     }
-    set({ watchId: null, status: "idle" });
+    stopWatchingPosition();
+    set({ status: "requesting" });
+    try {
+      const granted = await requestLocationPermission();
+      if (granted) {
+        set({ permission: "granted", status: "active", error: null });
+        get().startWatching();
+        return true;
+      } else {
+        set({ permission: "denied", status: "denied", error: "Permiso de ubicación denegado en el navegador." });
+        return false;
+      }
+    } catch {
+      set({ status: "error", error: "Error al solicitar permiso de ubicación." });
+      return false;
+    }
   },
 
   setManualZone: (zone) => {
@@ -111,16 +177,120 @@ export const useGeoStore = create<GeoState>((set, get) => ({
   },
 
   setSimulatedZone: (zone) => {
+    if (zone) {
+      // Detener el watch real de GPS para que no sobreescriba las coordenadas simuladas
+      stopWatchingPosition();
+
+      // Centro geográfico de la zona
+      let simulatedPosition: UserPosition | null = null;
+      const center = getZoneCenter(zone);
+      if (center) {
+        simulatedPosition = {
+          latitude: center[0],
+          longitude: center[1],
+          accuracy: 15,
+          timestamp: Date.now(),
+        };
+      } else if (zone.cells && zone.cells.length > 0) {
+        const decoded = decodeGeohash(zone.cells[0]);
+        simulatedPosition = {
+          latitude: decoded.latitude,
+          longitude: decoded.longitude,
+          accuracy: 15,
+          timestamp: Date.now(),
+        };
+      }
+
+      set({
+        simulatedZone: zone,
+        simulatedCoordinates: null,
+        manualZone: null,
+        detectedZones: [zone],
+        userPosition: simulatedPosition,
+        userCells: zone.cells ? [...zone.cells] : [],
+        permission: "granted",
+        status: "active",
+        error: null,
+      });
+    } else {
+      get().clearSimulation();
+    }
+  },
+
+  setSimulatedCoordinates: (coords) => {
+    if (coords) {
+      stopWatchingPosition();
+
+      const simulatedPosition: UserPosition = {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: 15,
+        timestamp: Date.now(),
+      };
+      const cells = getUserCells(simulatedPosition);
+      const zones = getAccessibleZones(simulatedPosition);
+
+      set({
+        simulatedCoordinates: coords,
+        simulatedZone: zones[0] ?? null,
+        manualZone: null,
+        detectedZones: zones,
+        userPosition: simulatedPosition,
+        userCells: cells,
+        permission: "granted",
+        status: "active",
+        error: null,
+      });
+    } else {
+      get().clearSimulation();
+    }
+  },
+
+  clearSimulation: () => {
     set({
-      simulatedZone: zone,
-      currentZone: zone,
-      permission: zone ? "granted" : "prompt",
-      status: zone ? "watching" : "idle",
+      simulatedZone: null,
+      simulatedCoordinates: null,
+      manualZone: null,
+      userPosition: null,
+      userCells: [],
+      detectedZones: [],
     });
+    get().startWatching();
+  },
+
+  isSimulating: () => {
+    const { simulatedZone, simulatedCoordinates } = get();
+    return Boolean(simulatedZone || simulatedCoordinates);
+  },
+
+  setFollowUserPosition: (follow) => {
+    set({ followUserPosition: follow });
+  },
+
+  toggleFollowUser: () => {
+    set((state) => ({ followUserPosition: !state.followUserPosition }));
+  },
+
+  centerOnUser: () => {
+    set({ followUserPosition: true });
   },
 
   effectiveZone: () => {
-    const { manualZone, currentZone } = get();
-    return manualZone ?? currentZone;
+    const { simulatedZone, manualZone, detectedZones } = get();
+    return simulatedZone ?? manualZone ?? detectedZones[0] ?? null;
+  },
+
+  canPublishInZone: (zoneId: string) => {
+    const { simulatedZone, userPosition } = get();
+    if (simulatedZone?.id === zoneId) return true;
+    return canPublishInZoneForum(userPosition, zoneId).canPublish;
+  },
+
+  getAccuracyLevel: () => {
+    const { userPosition } = get();
+    if (!userPosition) return null;
+    if (userPosition.accuracy < 100) return "good";
+    if (userPosition.accuracy <= 300) return "acceptable";
+    return "poor";
   },
 }));

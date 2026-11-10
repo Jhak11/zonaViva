@@ -1,21 +1,31 @@
 // ──────────────────────────────────────────────────────────────────────
-//  V7 – Ajustes y privacidad (Iteración 3)
-//  Gestión de almacenamiento local IndexedDB, persistencia y borrado.
+//  V8 – Ajustes y privacidad (Iteración 3 mejorada)
+//  Gestión de foros con copia local: salir por foro o de todos.
 // ──────────────────────────────────────────────────────────────────────
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useIdentityStore } from "@/stores/identityStore";
 import { useGeoStore } from "@/stores/geoStore";
+import { useForumStore } from "@/stores/forumStore";
 import { generateAlias } from "@/modules/identity";
-import { APP_NAME, MAX_ALIAS_LENGTH } from "@zonaviva/protocol";
+import { APP_NAME, MAX_ALIAS_LENGTH, ZONES_BY_ID, FORUM_PREFIX_ZONE } from "@zonaviva/protocol";
 import {
   getStorageStats,
-  clearAllLocalData,
   requestStoragePersistence,
+  getLocalForumList,
 } from "@/db/storage";
+import { TrashIcon } from "@heroicons/react/24/outline";
+
+interface ForumEntry {
+  id: string;
+  name: string;
+  messageCount: number;
+}
 
 export default function AjustesPage() {
   const { session, setAlias, renewSession } = useIdentityStore();
-  const { permission, currentZone, manualZone } = useGeoStore();
+  const { permission, effectiveZone: getEffectiveZone, manualZone } = useGeoStore();
+  const currentZone = getEffectiveZone();
+  const { leaveForumPermanently, leaveAllForums } = useForumStore();
 
   const [editingAlias, setEditingAlias] = useState(false);
   const [aliasInput, setAliasInput] = useState(session?.alias ?? "");
@@ -34,18 +44,36 @@ export default function AjustesPage() {
   const [clearing, setClearing] = useState(false);
   const [persistMsg, setPersistMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  // Lista de foros con copia local
+  const [localForums, setLocalForums] = useState<ForumEntry[]>([]);
+  const [leavingForum, setLeavingForum] = useState<string | null>(null);
+  const [leaveForumConfirm, setLeaveForumConfirm] = useState<string | null>(null);
+  const [leaveAllConfirm, setLeaveAllConfirm] = useState(false);
+  const [leavingAll, setLeavingAll] = useState(false);
 
-  async function loadStats() {
+  const loadData = useCallback(async () => {
     try {
-      const s = await getStorageStats();
+      const [s, forums] = await Promise.all([getStorageStats(), getLocalForumList()]);
       setStats(s);
+      setLocalForums(
+        forums.map((f) => {
+          // Intentar resolver nombre legible desde las zonas
+          let displayName = f.name;
+          if (f.id.startsWith(FORUM_PREFIX_ZONE)) {
+            const zid = f.id.slice(FORUM_PREFIX_ZONE.length);
+            if (ZONES_BY_ID[zid]) displayName = ZONES_BY_ID[zid].name;
+          }
+          return { id: f.id, name: displayName, messageCount: f.messageCount };
+        })
+      );
     } catch {
       // Ignorar fallo de lectura de stats
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   async function handleRequestPersist() {
     const granted = await requestStoragePersistence();
@@ -63,10 +91,34 @@ export default function AjustesPage() {
       return;
     }
     setClearing(true);
-    await clearAllLocalData();
-    await loadStats();
+    await leaveAllForums();
+    await loadData();
     setClearing(false);
     setClearConfirm(false);
+  }
+
+  async function handleLeaveForum(forumId: string) {
+    if (leaveForumConfirm !== forumId) {
+      setLeaveForumConfirm(forumId);
+      return;
+    }
+    setLeavingForum(forumId);
+    await leaveForumPermanently(forumId);
+    setLeavingForum(null);
+    setLeaveForumConfirm(null);
+    await loadData();
+  }
+
+  async function handleLeaveAll() {
+    if (!leaveAllConfirm) {
+      setLeaveAllConfirm(true);
+      return;
+    }
+    setLeavingAll(true);
+    await leaveAllForums();
+    setLeavingAll(false);
+    setLeaveAllConfirm(false);
+    await loadData();
   }
 
   if (!session) return null;
@@ -89,6 +141,7 @@ export default function AjustesPage() {
     }
     setIsRenewing(true);
     await renewSession();
+    await loadData();
     setAliasInput(useIdentityStore.getState().session?.alias ?? "");
     setRenewConfirm(false);
     setIsRenewing(false);
@@ -158,32 +211,158 @@ export default function AjustesPage() {
             <InfoRow label="Sesión creada" value={new Date(session.createdAt).toLocaleString("es-PE")} />
             <InfoRow
               label="Clave pública"
-              value={<span className="font-mono text-xs text-slate-500 break-all">{session.publicKey.slice(0, 24)}…</span>}
+              value={
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="font-mono text-xs text-brand-400 break-all"
+                    title={session.publicKey}
+                  >
+                    {session.publicKey.slice(0, 10)}…{session.publicKey.slice(-10)}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-sans">(P-256)</span>
+                </div>
+              }
             />
 
             {/* Renovar sesión */}
             <div className="pt-2">
               {renewConfirm && (
-                <p className="text-amber-400 text-xs mb-2">
-                  ⚠️ Se generará un nuevo alias y nuevo par de claves criptográficas. Tu historial local se conserva pero tu identidad anterior desaparece.
-                </p>
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl mb-2 space-y-1.5">
+                  <p className="text-red-300 font-semibold text-xs flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>Reinicio a nuevo usuario limpio</span>
+                  </p>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    Al renovar sesión se destruyen las claves actuales y se genera una <strong>identidad completamente nueva</strong>. Como nuevo usuario en la red, <strong>se limpiará tu historial local de foros, mensajes y contactos guardados</strong>.
+                  </p>
+                  <p className="text-purple-300 text-[11px] leading-relaxed">
+                    💡 <em>¿Solo quieres cambiar tu nombre?</em> Usa <strong>"Editar"</strong> junto a tu alias arriba para cambiar tu apodo sin perder tus contactos ni tu historial.
+                  </p>
+                </div>
               )}
-              <button
-                onClick={handleRenewSession}
-                disabled={isRenewing}
-                className={`w-full py-2.5 rounded-xl font-medium text-xs transition-colors ${
-                  renewConfirm
-                    ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
-                    : "bg-surface-2 text-slate-300 hover:bg-surface-1 border border-surface-2"
-                }`}
-              >
-                {isRenewing ? "Renovando identidad…" : renewConfirm ? "Confirmar renovación de sesión" : "🔄 Renovar sesión y alias"}
-              </button>
+              <div className="flex gap-2">
+                {renewConfirm && (
+                  <button
+                    onClick={() => setRenewConfirm(false)}
+                    className="py-2.5 px-3 rounded-xl bg-surface-2 hover:bg-surface-3 text-slate-300 text-xs font-semibold transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                )}
+                <button
+                  onClick={handleRenewSession}
+                  disabled={isRenewing}
+                  className={`flex-1 py-2.5 rounded-xl font-medium text-xs transition-colors ${
+                    renewConfirm
+                      ? "bg-red-600 hover:bg-red-500 text-white font-semibold shadow-md shadow-red-900/30"
+                      : "bg-surface-2 text-slate-300 hover:bg-surface-1 border border-surface-2"
+                  }`}
+                >
+                  {isRenewing
+                    ? "Renovando identidad limpia…"
+                    : renewConfirm
+                    ? "Confirmar e iniciar como usuario nuevo"
+                    : "🔄 Renovar sesión y claves (Nuevo usuario)"}
+                </button>
+              </div>
             </div>
           </div>
         </Section>
 
-        {/* ── Sección: Almacenamiento local e IndexedDB (Iteración 3) ── */}
+        {/* ── Sección: Foros con copia local ── */}
+        <Section title="Foros guardados en este dispositivo">
+          <div className="space-y-3 text-xs">
+            {localForums.length === 0 ? (
+              <p className="text-slate-500 text-center py-2">
+                No hay ningún foro con copia local guardada.
+              </p>
+            ) : (
+              <>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Estos foros tienen historial guardado en tu dispositivo. "Salir del foro" borra tu copia local; las copias de otros usuarios no se ven afectadas.
+                </p>
+                <div className="space-y-2">
+                  {localForums.map((forum) => {
+                    const isConfirming = leaveForumConfirm === forum.id;
+                    const isProcessing = leavingForum === forum.id;
+                    return (
+                      <div
+                        key={forum.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-0 border border-surface-2/60"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-white font-medium text-xs truncate">{forum.name}</p>
+                          <p className="text-slate-500 text-[11px]">
+                            {forum.messageCount} {forum.messageCount === 1 ? "mensaje" : "mensajes"} guardados
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-none">
+                          {isConfirming && (
+                            <span className="text-red-400 text-[11px] font-medium">¿Seguro?</span>
+                          )}
+                          <button
+                            onClick={() => handleLeaveForum(forum.id)}
+                            disabled={isProcessing}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                              isConfirming
+                                ? "bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30"
+                                : "bg-surface-2/70 text-slate-400 hover:text-red-300 border border-surface-2"
+                            }`}
+                          >
+                            <TrashIcon className="w-3 h-3" />
+                            {isProcessing ? "Saliendo…" : isConfirming ? "Confirmar" : "Salir"}
+                          </button>
+                          {isConfirming && (
+                            <button
+                              onClick={() => setLeaveForumConfirm(null)}
+                              className="text-slate-500 hover:text-white text-[11px] px-1.5"
+                            >
+                              No
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Botón salir de todos */}
+                <div className="pt-2 border-t border-surface-2/40">
+                  {leaveAllConfirm && (
+                    <p className="text-red-400 text-[11px] mb-2 leading-relaxed">
+                      ⚠️ Esto borra las copias de TODOS los foros de este dispositivo. Las copias de otros usuarios no se ven afectadas.
+                    </p>
+                  )}
+                  <button
+                    onClick={handleLeaveAll}
+                    disabled={leavingAll}
+                    className={`w-full py-2.5 rounded-xl font-medium transition-colors ${
+                      leaveAllConfirm
+                        ? "bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30"
+                        : "bg-surface-2/70 text-slate-400 hover:text-red-300 border border-surface-2"
+                    }`}
+                  >
+                    {leavingAll
+                      ? "Saliendo de todos los foros…"
+                      : leaveAllConfirm
+                      ? "Sí, salir de todos los foros"
+                      : "🗑️ Salir de todos los foros"}
+                  </button>
+                  {leaveAllConfirm && (
+                    <button
+                      onClick={() => setLeaveAllConfirm(false)}
+                      className="w-full mt-1.5 py-2 rounded-xl text-slate-500 hover:text-white text-xs transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </Section>
+
+        {/* ── Sección: Almacenamiento local e IndexedDB ── */}
         <Section title="Almacenamiento Local (IndexedDB)">
           <div className="space-y-3 text-xs">
             <InfoRow label="Mensajes guardados" value={<span className="font-semibold text-white">{stats.messageCount}</span>} />

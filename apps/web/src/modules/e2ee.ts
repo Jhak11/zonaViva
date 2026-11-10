@@ -173,3 +173,105 @@ export async function decryptMessage(
 
   return new TextDecoder().decode(plainBuf);
 }
+
+// ── Claves E2EE Persistentes para Pares y Chats Guardados ────────────
+
+const PERSISTENT_KEY_STORAGE = "zonaviva:direct_e2ee_keypair";
+
+export async function exportPrivateKey(key: CryptoKey): Promise<string> {
+  const pkcs8 = await crypto.subtle.exportKey("pkcs8", key);
+  return bufToBase64url(pkcs8);
+}
+
+export async function importPrivateKey(b64url: string): Promise<CryptoKey> {
+  const buf = base64urlToBuf(b64url);
+  return await crypto.subtle.importKey(
+    "pkcs8",
+    buf as unknown as BufferSource,
+    {
+      name: "ECDH",
+      namedCurve: "P-256",
+    },
+    true,
+    ["deriveKey", "deriveBits"]
+  );
+}
+
+export async function getOrCreatePersistentE2EEKeyPair(): Promise<{
+  publicKey: string;
+  privateKey: string;
+}> {
+  // 1. Intentar leer desde IndexedDB (almacenamiento no expuesto a volcado síncrono por XSS)
+  try {
+    const { getSecureKey, saveSecureKey } = await import("@/db/storage");
+    const stored = await getSecureKey<{ publicKey: string; privateKey: string }>(
+      "direct_e2ee_keypair"
+    );
+    if (stored?.publicKey && stored?.privateKey) {
+      return stored;
+    }
+
+    // 2. Migración: Si existía en localStorage de versiones anteriores, migrarlo a IndexedDB y purgar localStorage
+    if (typeof window !== "undefined") {
+      const legacyRaw = localStorage.getItem(PERSISTENT_KEY_STORAGE);
+      if (legacyRaw) {
+        try {
+          const legacy = JSON.parse(legacyRaw);
+          if (legacy?.publicKey && legacy?.privateKey) {
+            await saveSecureKey("direct_e2ee_keypair", legacy);
+            localStorage.removeItem(PERSISTENT_KEY_STORAGE);
+            return legacy;
+          }
+        } catch {
+          // Si estaba corrupto, generar nuevo
+        }
+      }
+    }
+
+    // 3. Generar nuevo par de claves E2EE
+    const keyPair = await generateEphemeralKeyPair();
+    const [pub, priv] = await Promise.all([
+      exportPublicKey(keyPair.publicKey),
+      exportPrivateKey(keyPair.privateKey),
+    ]);
+    const record = { publicKey: pub, privateKey: priv };
+
+    await saveSecureKey("direct_e2ee_keypair", record);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(PERSISTENT_KEY_STORAGE);
+    }
+    return record;
+  } catch {
+    // Contingencia si IndexedDB no está disponible en este hilo
+    const keyPair = await generateEphemeralKeyPair();
+    const [pub, priv] = await Promise.all([
+      exportPublicKey(keyPair.publicKey),
+      exportPrivateKey(keyPair.privateKey),
+    ]);
+    return { publicKey: pub, privateKey: priv };
+  }
+}
+
+export function resetPersistentE2EEKeyPair(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(PERSISTENT_KEY_STORAGE);
+  }
+  import("@/db/storage").then(({ removeSecureKey }) => {
+    removeSecureKey("direct_e2ee_keypair").catch(() => {});
+  });
+}
+
+export async function deriveDirectSharedKey(
+  myPrivateKeyB64: string,
+  peerPublicKeyB64: string
+): Promise<CryptoKey> {
+  const myPriv = await importPrivateKey(myPrivateKeyB64);
+  const peerPub = await importPublicKey(peerPublicKeyB64);
+  return await deriveSharedKey(myPriv, peerPub);
+}
+
+export function getDirectChannelId(pubA: string, pubB: string): string {
+  const [first, second] = [pubA, pubB].sort();
+  return `direct:${first}_${second}`;
+}
+

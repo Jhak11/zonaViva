@@ -3,17 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Tipos, esquemas Zod y constantes compartidas entre web, relay y archivist",
+  "description": "Tipos, esquemas Zod y constantes compartidas entre web y relay",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "zones:validate": "tsx scripts/validateZones.ts",
+    "zones:build": "tsx scripts/generateZoneFiles.ts",
+    "zones:sync": "tsx scripts/syncZones.ts",
+    "zones:all": "pnpm zones:validate && pnpm zones:build && pnpm zones:sync"
   },
   "dependencies": {
+    "ngeohash": "^0.6.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.7.0",
     "typescript": "^5.4.5"
   }
 }

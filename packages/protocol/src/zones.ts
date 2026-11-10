@@ -1,50 +1,117 @@
 // ──────────────────────────────────────────────────────────────────────
-//  Catálogo de zonas – Iteración 1 piloto: Puno, Perú
+//  Catálogo de zonas – Definido estáticamente desde zones.json
 //  Identificadores (id) son ESTABLES: no cambiarán entre versiones.
+//
+//  NOTA: Este archivo se regenera automáticamente con el script syncZones.ts
+//        No editar manualmente - los cambios se perderán.
 // ──────────────────────────────────────────────────────────────────────
 import type { Zone } from "./types.js";
 
 export const ZONES: Zone[] = [
   {
-    id: "puno-centro",
-    name: "Centro de Puno",
-    description: "Plaza Mayor, Catedral, jirón Lima y alrededores del centro histórico",
-    type: "circle",
-    center: { lat: -15.8402, lng: -70.0219 },
-    radiusMeters: 700,
-    mapCenter: { lat: -15.8402, lng: -70.0219 },
-    mapZoom: 15,
+    "id": "mercado-central",
+    "name": "Mercado Central",
+    "description": "Mercado Central de Puno y comercios tradicionales de abastos",
+    "type": "permanent",
+    "color": "#f97316",
+    "cells": [
+      "6mnjys8",
+      "6mnjysb",
+      "6mnjyt0",
+      "6mnjymp"
+    ]
   },
   {
-    id: "puno-puerto",
-    name: "Puerto y Lago Titicaca",
-    description: "Muelle turístico, embarcadero y orilla del lago Titicaca",
-    type: "circle",
-    center: { lat: -15.8453, lng: -70.0134 },
-    radiusMeters: 600,
-    mapCenter: { lat: -15.8453, lng: -70.0134 },
-    mapZoom: 15,
+    "id": "mercado-union",
+    "name": "Mercado Unión y Dignidad",
+    "description": "Principal centro comercial y mercado mayorista de la zona sur",
+    "type": "permanent",
+    "color": "#ec4899",
+    "cells": [
+      "6mnjysj",
+      "6mnjysm",
+      "6mnjysq",
+      "6mnjysk",
+      "6mnjyst",
+      "6mnjyss"
+    ]
   },
   {
-    id: "puno-mercado",
-    name: "Mercado Central",
-    description: "Mercado Central de Puno y zona comercial aledaña",
-    type: "circle",
-    center: { lat: -15.8368, lng: -70.0198 },
-    radiusMeters: 500,
-    mapCenter: { lat: -15.8368, lng: -70.0198 },
-    mapZoom: 16,
+    "id": "mercado-bellavista",
+    "name": "Mercado Bellavista",
+    "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+    "type": "permanent",
+    "color": "#eab308",
+    "cells": [
+      "6mnjyt6",
+      "6mnjyt7",
+      "6mnjytd",
+      "6mnjyte",
+      "6mnjyt9",
+      "6mnjytf"
+    ]
   },
-    {
-    "id": "puno-laureles",
-    "name": "Jirón Los Laureles (Pruebas)",
-    "description": "Zona permanente en Jr. Los Laureles para pruebas de proximidad y desarrollo",
-    "type": "circle",
-    "center": { "lat": -15.8672, "lng": -70.0094 },
-    "radiusMeters": 400,
-    "mapCenter": { "lat": -15.8672, "lng": -70.0094 },
-    "mapZoom": 16
+  {
+    "id": "plaza-mayor",
+    "name": "Plaza Mayor de Puno",
+    "description": "Plaza de Armas, Catedral y centro histórico de Puno",
+    "type": "permanent",
+    "color": "#8b5cf6",
+    "cells": [
+      "6mnjykn",
+      "6mnjykp",
+      "6mnjykq",
+      "6mnjykr"
+    ]
   },
+  {
+    "id": "parque-pino",
+    "name": "Parque Pino",
+    "description": "Parque Manuel Pino, Iglesia San Juan y peatonal Jirón Lima",
+    "type": "permanent",
+    "color": "#10b981",
+    "cells": [
+      "6mnjykx",
+      "6mnjykw",
+      "6mnjykz",
+      "6mnjyky"
+    ]
+  },
+  {
+    "id": "unap-campus",
+    "name": "Universidad Nacional del Altiplano",
+    "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+    "type": "permanent",
+    "color": "#0284c7",
+    "cells": [
+      "6mnjywx",
+      "6mnjyy8",
+      "6mnjywz",
+      "6mnjyyb",
+      "6mnjywy",
+      "6mnjyyc",
+      "6mnjyxp",
+      "6mnjyz0",
+      "6mnjyxn",
+      "6mnjyz1",
+      "6mnjyxj",
+      "6mnjyyf",
+      "6mnjyz4",
+      "6mnjyxr",
+      "6mnjyz2",
+      "6mnjyxq",
+      "6mnjyz3",
+      "6mnjyxm",
+      "6mnjyz6",
+      "6mnjyxx",
+      "6mnjyz8",
+      "6mnjyxw",
+      "6mnjyxt",
+      "6mnjyxz",
+      "6mnjyxy",
+      "6mnjyxv"
+    ]
+  }
 ];
 
 /** Mapa rápido por ID para búsquedas O(1) */

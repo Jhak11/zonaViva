@@ -24,6 +24,9 @@ import {
   onPeerLeft,
   onQueueTimeout,
   onQueueCancelled,
+  joinChatLobby,
+  leaveChatLobby,
+  onChatScopeActive,
 } from "@/modules/network";
 
 export type ChatStatus = "idle" | "searching" | "matched" | "ended";
@@ -47,9 +50,12 @@ interface RandomChatState {
   messages: EphemeralChatMessage[];
   errorMessage: string | null;
   listenersAttached: boolean;
+  activeScopes: Set<string>;
 
   // Acciones
   initListeners: () => void;
+  enterLobby: () => Promise<void>;
+  leaveLobby: () => void;
   startSearch: (zoneId: string) => Promise<void>;
   cancelSearch: () => void;
   sendMessage: (text: string) => Promise<boolean>;
@@ -70,6 +76,21 @@ export const useRandomChatStore = create<RandomChatState>((set, get) => ({
   messages: [],
   errorMessage: null,
   listenersAttached: false,
+  activeScopes: new Set<string>(),
+
+  enterLobby: async () => {
+    get().initListeners();
+    try {
+      const scopes = await joinChatLobby();
+      set({ activeScopes: new Set(scopes) });
+    } catch {
+      // Ignorar
+    }
+  },
+
+  leaveLobby: () => {
+    leaveChatLobby();
+  },
 
   initListeners: () => {
     if (get().listenersAttached) return;
@@ -145,6 +166,16 @@ export const useRandomChatStore = create<RandomChatState>((set, get) => ({
         status: "idle",
         errorMessage: null,
       });
+    });
+
+    onChatScopeActive(({ scopeId, active }) => {
+      const current = new Set(get().activeScopes);
+      if (active) {
+        current.add(scopeId);
+      } else {
+        current.delete(scopeId);
+      }
+      set({ activeScopes: current });
     });
 
     set({ listenersAttached: true });
@@ -235,7 +266,7 @@ export const useRandomChatStore = create<RandomChatState>((set, get) => ({
     if (roomId) {
       networkLeaveChat(roomId);
     }
-    const currentZone = zoneId ?? "puno-centro";
+    const currentZone = zoneId ?? "plaza-mayor";
     await get().startSearch(currentZone);
   },
 

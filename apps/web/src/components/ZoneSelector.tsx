@@ -7,10 +7,11 @@ interface ZoneSelectorProps {
   zones: Zone[];
   selected: Zone | null;
   onSelect: (zone: Zone) => void;
+  onSimulate?: (zone: Zone) => void;
   onClose: () => void;
 }
 
-export default function ZoneSelector({ zones, selected, onSelect, onClose }: ZoneSelectorProps) {
+export default function ZoneSelector({ zones, selected, onSelect, onSimulate, onClose }: ZoneSelectorProps) {
   return (
     // Backdrop
     <div
@@ -23,30 +24,60 @@ export default function ZoneSelector({ zones, selected, onSelect, onClose }: Zon
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1 bg-surface-2 rounded-full mx-auto mb-5" />
-        <h2 className="text-lg font-bold text-white mb-4">Explorar zona</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white">Explorar o Simular Zona</h2>
+          <span className="text-[11px] text-slate-400">Puno MVP</span>
+        </div>
 
-        <div className="space-y-2 max-h-72 overflow-y-auto">
+        <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
           {zones.map((zone) => (
-            <button
+            <div
               key={zone.id}
-              onClick={() => onSelect(zone)}
-              className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-colors ${
+              className={`p-3 rounded-xl border transition-colors ${
                 selected?.id === zone.id
-                  ? "bg-brand-500/20 border border-brand-500/30"
-                  : "bg-surface-0 border border-surface-2 hover:border-surface-3"
+                  ? "bg-brand-500/15 border-brand-500/40"
+                  : "bg-surface-0 border-surface-2 hover:border-surface-3"
               }`}
             >
-              <span className="text-xl flex-none">📍</span>
-              <div>
-                <p className={`font-medium text-sm ${selected?.id === zone.id ? "text-brand-300" : "text-white"}`}>
-                  {zone.name}
-                </p>
-                <p className="text-slate-400 text-xs">{zone.description}</p>
+              <div
+                onClick={() => onSelect(zone)}
+                className="flex items-start gap-3 cursor-pointer"
+              >
+                <span
+                  className="w-3.5 h-3.5 rounded-full mt-1 flex-none"
+                  style={{ backgroundColor: zone.color || "#0284c7" }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className={`font-semibold text-sm ${selected?.id === zone.id ? "text-brand-300" : "text-white"}`}>
+                      {zone.name}
+                    </p>
+                    {selected?.id === zone.id && (
+                      <span className="text-brand-400 text-xs font-bold">Seleccionada</span>
+                    )}
+                  </div>
+                  <p className="text-slate-400 text-xs truncate mt-0.5">{zone.description}</p>
+                  <span className="text-[10px] text-slate-500 mt-0.5 block">{zone.cells.length} celdas contiguas</span>
+                </div>
               </div>
-              {selected?.id === zone.id && (
-                <span className="ml-auto text-brand-400 flex-none">✓</span>
+
+              {onSimulate && (
+                <div className="mt-2 pt-2 border-t border-surface-2/60 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500">¿Deseas probar publicaciones?</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSimulate(zone);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
+                  >
+                    <span>🧪</span>
+                    <span>Simular presencia aquí</span>
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
           ))}
         </div>
 
@@ -54,7 +85,7 @@ export default function ZoneSelector({ zones, selected, onSelect, onClose }: Zon
           onClick={onClose}
           className="mt-4 w-full py-3 rounded-xl bg-surface-2 text-slate-300 hover:bg-surface-1 transition-colors text-sm font-medium"
         >
-          Cancelar
+          Cerrar
         </button>
       </div>
     </div>

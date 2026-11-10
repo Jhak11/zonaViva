@@ -122,10 +122,6 @@ export async function generateSession(customAlias?: string): Promise<LocalSessio
   };
 }
 
-export async function exportSession(session: LocalSession): Promise<LocalSession> {
-  return session;
-}
-
 export async function importSession(stored: LocalSession): Promise<LocalSession> {
   if (!stored.publicKey || !stored.privateKey) {
     throw new Error("Sesión inválida");

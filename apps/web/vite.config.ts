@@ -1,14 +1,16 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
-import basicSsl from "@vitejs/plugin-basic-ssl";
 import path from "path";
 
 // https://vitejs.dev/config/
+// NOTA: basicSsl() fue removido — el relay corre en HTTP puro (sin TLS).
+// Usar HTTPS en Vite con un relay HTTP causa Mixed Content y ECONNREFUSED en el proxy WS.
+// Para acceder desde móvil en LAN, usa la IP local directamente por HTTP.
 export default defineConfig({
   plugins: [
     react(),
-    basicSsl(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "apple-touch-icon.png", "icons/*.png"],
@@ -67,16 +69,23 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    allowedHosts: true,
     proxy: {
       "/socket.io": {
-        target: "http://localhost:3001",
+        target: "http://127.0.0.1:3001",
         ws: true,
         changeOrigin: true,
       },
       "/key": {
-        target: "http://localhost:3001",
+        target: "http://127.0.0.1:3001",
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    allowedHosts: true,
+  },
+  test: {
+    testTimeout: 15000,
   },
 });

@@ -1,0 +1,1805 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-central",
+        "name": "Mercado Central",
+        "description": "Mercado Central de Puno y comercios tradicionales de abastos",
+        "color": "#f97316"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02685546875,
+              -15.83953857421875
+            ],
+            [
+              -70.02548217773438,
+              -15.83953857421875
+            ],
+            [
+              -70.02548217773438,
+              -15.838165283203125
+            ],
+            [
+              -70.02685546875,
+              -15.838165283203125
+            ],
+            [
+              -70.02685546875,
+              -15.83953857421875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-central",
+        "name": "Mercado Central",
+        "description": "Mercado Central de Puno y comercios tradicionales de abastos",
+        "color": "#f97316"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02685546875,
+              -15.838165283203125
+            ],
+            [
+              -70.02548217773438,
+              -15.838165283203125
+            ],
+            [
+              -70.02548217773438,
+              -15.8367919921875
+            ],
+            [
+              -70.02685546875,
+              -15.8367919921875
+            ],
+            [
+              -70.02685546875,
+              -15.838165283203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-central",
+        "name": "Mercado Central",
+        "description": "Mercado Central de Puno y comercios tradicionales de abastos",
+        "color": "#f97316"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02685546875,
+              -15.8367919921875
+            ],
+            [
+              -70.02548217773438,
+              -15.8367919921875
+            ],
+            [
+              -70.02548217773438,
+              -15.835418701171875
+            ],
+            [
+              -70.02685546875,
+              -15.835418701171875
+            ],
+            [
+              -70.02685546875,
+              -15.8367919921875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-central",
+        "name": "Mercado Central",
+        "description": "Mercado Central de Puno y comercios tradicionales de abastos",
+        "color": "#f97316"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02822875976562,
+              -15.8367919921875
+            ],
+            [
+              -70.02685546875,
+              -15.8367919921875
+            ],
+            [
+              -70.02685546875,
+              -15.835418701171875
+            ],
+            [
+              -70.02822875976562,
+              -15.835418701171875
+            ],
+            [
+              -70.02822875976562,
+              -15.8367919921875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-union",
+        "name": "Mercado Unión y Dignidad",
+        "description": "Principal centro comercial y mercado mayorista de la zona sur",
+        "color": "#ec4899"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.84228515625
+            ],
+            [
+              -70.01861572265625,
+              -15.84228515625
+            ],
+            [
+              -70.01861572265625,
+              -15.840911865234375
+            ],
+            [
+              -70.01998901367188,
+              -15.840911865234375
+            ],
+            [
+              -70.01998901367188,
+              -15.84228515625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-union",
+        "name": "Mercado Unión y Dignidad",
+        "description": "Principal centro comercial y mercado mayorista de la zona sur",
+        "color": "#ec4899"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.840911865234375
+            ],
+            [
+              -70.01861572265625,
+              -15.840911865234375
+            ],
+            [
+              -70.01861572265625,
+              -15.83953857421875
+            ],
+            [
+              -70.01998901367188,
+              -15.83953857421875
+            ],
+            [
+              -70.01998901367188,
+              -15.840911865234375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-union",
+        "name": "Mercado Unión y Dignidad",
+        "description": "Principal centro comercial y mercado mayorista de la zona sur",
+        "color": "#ec4899"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01861572265625,
+              -15.840911865234375
+            ],
+            [
+              -70.01724243164062,
+              -15.840911865234375
+            ],
+            [
+              -70.01724243164062,
+              -15.83953857421875
+            ],
+            [
+              -70.01861572265625,
+              -15.83953857421875
+            ],
+            [
+              -70.01861572265625,
+              -15.840911865234375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-union",
+        "name": "Mercado Unión y Dignidad",
+        "description": "Principal centro comercial y mercado mayorista de la zona sur",
+        "color": "#ec4899"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.0213623046875,
+              -15.840911865234375
+            ],
+            [
+              -70.01998901367188,
+              -15.840911865234375
+            ],
+            [
+              -70.01998901367188,
+              -15.83953857421875
+            ],
+            [
+              -70.0213623046875,
+              -15.83953857421875
+            ],
+            [
+              -70.0213623046875,
+              -15.840911865234375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-union",
+        "name": "Mercado Unión y Dignidad",
+        "description": "Principal centro comercial y mercado mayorista de la zona sur",
+        "color": "#ec4899"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.83953857421875
+            ],
+            [
+              -70.01861572265625,
+              -15.83953857421875
+            ],
+            [
+              -70.01861572265625,
+              -15.838165283203125
+            ],
+            [
+              -70.01998901367188,
+              -15.838165283203125
+            ],
+            [
+              -70.01998901367188,
+              -15.83953857421875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-union",
+        "name": "Mercado Unión y Dignidad",
+        "description": "Principal centro comercial y mercado mayorista de la zona sur",
+        "color": "#ec4899"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.0213623046875,
+              -15.83953857421875
+            ],
+            [
+              -70.01998901367188,
+              -15.83953857421875
+            ],
+            [
+              -70.01998901367188,
+              -15.838165283203125
+            ],
+            [
+              -70.0213623046875,
+              -15.838165283203125
+            ],
+            [
+              -70.0213623046875,
+              -15.83953857421875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-bellavista",
+        "name": "Mercado Bellavista",
+        "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+        "color": "#eab308"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02410888671875,
+              -15.835418701171875
+            ],
+            [
+              -70.02273559570312,
+              -15.835418701171875
+            ],
+            [
+              -70.02273559570312,
+              -15.83404541015625
+            ],
+            [
+              -70.02410888671875,
+              -15.83404541015625
+            ],
+            [
+              -70.02410888671875,
+              -15.835418701171875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-bellavista",
+        "name": "Mercado Bellavista",
+        "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+        "color": "#eab308"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02273559570312,
+              -15.835418701171875
+            ],
+            [
+              -70.0213623046875,
+              -15.835418701171875
+            ],
+            [
+              -70.0213623046875,
+              -15.83404541015625
+            ],
+            [
+              -70.02273559570312,
+              -15.83404541015625
+            ],
+            [
+              -70.02273559570312,
+              -15.835418701171875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-bellavista",
+        "name": "Mercado Bellavista",
+        "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+        "color": "#eab308"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02410888671875,
+              -15.83404541015625
+            ],
+            [
+              -70.02273559570312,
+              -15.83404541015625
+            ],
+            [
+              -70.02273559570312,
+              -15.832672119140625
+            ],
+            [
+              -70.02410888671875,
+              -15.832672119140625
+            ],
+            [
+              -70.02410888671875,
+              -15.83404541015625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-bellavista",
+        "name": "Mercado Bellavista",
+        "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+        "color": "#eab308"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02273559570312,
+              -15.83404541015625
+            ],
+            [
+              -70.0213623046875,
+              -15.83404541015625
+            ],
+            [
+              -70.0213623046875,
+              -15.832672119140625
+            ],
+            [
+              -70.02273559570312,
+              -15.832672119140625
+            ],
+            [
+              -70.02273559570312,
+              -15.83404541015625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-bellavista",
+        "name": "Mercado Bellavista",
+        "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+        "color": "#eab308"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02548217773438,
+              -15.83404541015625
+            ],
+            [
+              -70.02410888671875,
+              -15.83404541015625
+            ],
+            [
+              -70.02410888671875,
+              -15.832672119140625
+            ],
+            [
+              -70.02548217773438,
+              -15.832672119140625
+            ],
+            [
+              -70.02548217773438,
+              -15.83404541015625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "mercado-bellavista",
+        "name": "Mercado Bellavista",
+        "description": "Mercado tradicional del barrio Bellavista en la zona norte",
+        "color": "#eab308"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02410888671875,
+              -15.832672119140625
+            ],
+            [
+              -70.02273559570312,
+              -15.832672119140625
+            ],
+            [
+              -70.02273559570312,
+              -15.831298828125
+            ],
+            [
+              -70.02410888671875,
+              -15.831298828125
+            ],
+            [
+              -70.02410888671875,
+              -15.832672119140625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "plaza-mayor",
+        "name": "Plaza Mayor de Puno",
+        "description": "Plaza de Armas, Catedral y centro histórico de Puno",
+        "color": "#8b5cf6"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02960205078125,
+              -15.84228515625
+            ],
+            [
+              -70.02822875976562,
+              -15.84228515625
+            ],
+            [
+              -70.02822875976562,
+              -15.840911865234375
+            ],
+            [
+              -70.02960205078125,
+              -15.840911865234375
+            ],
+            [
+              -70.02960205078125,
+              -15.84228515625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "plaza-mayor",
+        "name": "Plaza Mayor de Puno",
+        "description": "Plaza de Armas, Catedral y centro histórico de Puno",
+        "color": "#8b5cf6"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02822875976562,
+              -15.84228515625
+            ],
+            [
+              -70.02685546875,
+              -15.84228515625
+            ],
+            [
+              -70.02685546875,
+              -15.840911865234375
+            ],
+            [
+              -70.02822875976562,
+              -15.840911865234375
+            ],
+            [
+              -70.02822875976562,
+              -15.84228515625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "plaza-mayor",
+        "name": "Plaza Mayor de Puno",
+        "description": "Plaza de Armas, Catedral y centro histórico de Puno",
+        "color": "#8b5cf6"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02960205078125,
+              -15.840911865234375
+            ],
+            [
+              -70.02822875976562,
+              -15.840911865234375
+            ],
+            [
+              -70.02822875976562,
+              -15.83953857421875
+            ],
+            [
+              -70.02960205078125,
+              -15.83953857421875
+            ],
+            [
+              -70.02960205078125,
+              -15.840911865234375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "plaza-mayor",
+        "name": "Plaza Mayor de Puno",
+        "description": "Plaza de Armas, Catedral y centro histórico de Puno",
+        "color": "#8b5cf6"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02822875976562,
+              -15.840911865234375
+            ],
+            [
+              -70.02685546875,
+              -15.840911865234375
+            ],
+            [
+              -70.02685546875,
+              -15.83953857421875
+            ],
+            [
+              -70.02822875976562,
+              -15.83953857421875
+            ],
+            [
+              -70.02822875976562,
+              -15.840911865234375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "parque-pino",
+        "name": "Parque Pino",
+        "description": "Parque Manuel Pino, Iglesia San Juan y peatonal Jirón Lima",
+        "color": "#10b981"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02822875976562,
+              -15.83953857421875
+            ],
+            [
+              -70.02685546875,
+              -15.83953857421875
+            ],
+            [
+              -70.02685546875,
+              -15.838165283203125
+            ],
+            [
+              -70.02822875976562,
+              -15.838165283203125
+            ],
+            [
+              -70.02822875976562,
+              -15.83953857421875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "parque-pino",
+        "name": "Parque Pino",
+        "description": "Parque Manuel Pino, Iglesia San Juan y peatonal Jirón Lima",
+        "color": "#10b981"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02960205078125,
+              -15.83953857421875
+            ],
+            [
+              -70.02822875976562,
+              -15.83953857421875
+            ],
+            [
+              -70.02822875976562,
+              -15.838165283203125
+            ],
+            [
+              -70.02960205078125,
+              -15.838165283203125
+            ],
+            [
+              -70.02960205078125,
+              -15.83953857421875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "parque-pino",
+        "name": "Parque Pino",
+        "description": "Parque Manuel Pino, Iglesia San Juan y peatonal Jirón Lima",
+        "color": "#10b981"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02822875976562,
+              -15.838165283203125
+            ],
+            [
+              -70.02685546875,
+              -15.838165283203125
+            ],
+            [
+              -70.02685546875,
+              -15.8367919921875
+            ],
+            [
+              -70.02822875976562,
+              -15.8367919921875
+            ],
+            [
+              -70.02822875976562,
+              -15.838165283203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "parque-pino",
+        "name": "Parque Pino",
+        "description": "Parque Manuel Pino, Iglesia San Juan y peatonal Jirón Lima",
+        "color": "#10b981"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.02960205078125,
+              -15.838165283203125
+            ],
+            [
+              -70.02822875976562,
+              -15.838165283203125
+            ],
+            [
+              -70.02822875976562,
+              -15.8367919921875
+            ],
+            [
+              -70.02960205078125,
+              -15.8367919921875
+            ],
+            [
+              -70.02960205078125,
+              -15.838165283203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01724243164062,
+              -15.82855224609375
+            ],
+            [
+              -70.015869140625,
+              -15.82855224609375
+            ],
+            [
+              -70.015869140625,
+              -15.827178955078125
+            ],
+            [
+              -70.01724243164062,
+              -15.827178955078125
+            ],
+            [
+              -70.01724243164062,
+              -15.82855224609375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.015869140625,
+              -15.82855224609375
+            ],
+            [
+              -70.01449584960938,
+              -15.82855224609375
+            ],
+            [
+              -70.01449584960938,
+              -15.827178955078125
+            ],
+            [
+              -70.015869140625,
+              -15.827178955078125
+            ],
+            [
+              -70.015869140625,
+              -15.82855224609375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01724243164062,
+              -15.827178955078125
+            ],
+            [
+              -70.015869140625,
+              -15.827178955078125
+            ],
+            [
+              -70.015869140625,
+              -15.8258056640625
+            ],
+            [
+              -70.01724243164062,
+              -15.8258056640625
+            ],
+            [
+              -70.01724243164062,
+              -15.827178955078125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.015869140625,
+              -15.827178955078125
+            ],
+            [
+              -70.01449584960938,
+              -15.827178955078125
+            ],
+            [
+              -70.01449584960938,
+              -15.8258056640625
+            ],
+            [
+              -70.015869140625,
+              -15.8258056640625
+            ],
+            [
+              -70.015869140625,
+              -15.827178955078125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01861572265625,
+              -15.827178955078125
+            ],
+            [
+              -70.01724243164062,
+              -15.827178955078125
+            ],
+            [
+              -70.01724243164062,
+              -15.8258056640625
+            ],
+            [
+              -70.01861572265625,
+              -15.8258056640625
+            ],
+            [
+              -70.01861572265625,
+              -15.827178955078125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01449584960938,
+              -15.827178955078125
+            ],
+            [
+              -70.01312255859375,
+              -15.827178955078125
+            ],
+            [
+              -70.01312255859375,
+              -15.8258056640625
+            ],
+            [
+              -70.01449584960938,
+              -15.8258056640625
+            ],
+            [
+              -70.01449584960938,
+              -15.827178955078125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01724243164062,
+              -15.8258056640625
+            ],
+            [
+              -70.015869140625,
+              -15.8258056640625
+            ],
+            [
+              -70.015869140625,
+              -15.824432373046875
+            ],
+            [
+              -70.01724243164062,
+              -15.824432373046875
+            ],
+            [
+              -70.01724243164062,
+              -15.8258056640625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.015869140625,
+              -15.8258056640625
+            ],
+            [
+              -70.01449584960938,
+              -15.8258056640625
+            ],
+            [
+              -70.01449584960938,
+              -15.824432373046875
+            ],
+            [
+              -70.015869140625,
+              -15.824432373046875
+            ],
+            [
+              -70.015869140625,
+              -15.8258056640625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01861572265625,
+              -15.8258056640625
+            ],
+            [
+              -70.01724243164062,
+              -15.8258056640625
+            ],
+            [
+              -70.01724243164062,
+              -15.824432373046875
+            ],
+            [
+              -70.01861572265625,
+              -15.824432373046875
+            ],
+            [
+              -70.01861572265625,
+              -15.8258056640625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01449584960938,
+              -15.8258056640625
+            ],
+            [
+              -70.01312255859375,
+              -15.8258056640625
+            ],
+            [
+              -70.01312255859375,
+              -15.824432373046875
+            ],
+            [
+              -70.01449584960938,
+              -15.824432373046875
+            ],
+            [
+              -70.01449584960938,
+              -15.8258056640625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.8258056640625
+            ],
+            [
+              -70.01861572265625,
+              -15.8258056640625
+            ],
+            [
+              -70.01861572265625,
+              -15.824432373046875
+            ],
+            [
+              -70.01998901367188,
+              -15.824432373046875
+            ],
+            [
+              -70.01998901367188,
+              -15.8258056640625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01312255859375,
+              -15.827178955078125
+            ],
+            [
+              -70.01174926757812,
+              -15.827178955078125
+            ],
+            [
+              -70.01174926757812,
+              -15.8258056640625
+            ],
+            [
+              -70.01312255859375,
+              -15.8258056640625
+            ],
+            [
+              -70.01312255859375,
+              -15.827178955078125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01312255859375,
+              -15.8258056640625
+            ],
+            [
+              -70.01174926757812,
+              -15.8258056640625
+            ],
+            [
+              -70.01174926757812,
+              -15.824432373046875
+            ],
+            [
+              -70.01312255859375,
+              -15.824432373046875
+            ],
+            [
+              -70.01312255859375,
+              -15.8258056640625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01724243164062,
+              -15.824432373046875
+            ],
+            [
+              -70.015869140625,
+              -15.824432373046875
+            ],
+            [
+              -70.015869140625,
+              -15.82305908203125
+            ],
+            [
+              -70.01724243164062,
+              -15.82305908203125
+            ],
+            [
+              -70.01724243164062,
+              -15.824432373046875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.015869140625,
+              -15.824432373046875
+            ],
+            [
+              -70.01449584960938,
+              -15.824432373046875
+            ],
+            [
+              -70.01449584960938,
+              -15.82305908203125
+            ],
+            [
+              -70.015869140625,
+              -15.82305908203125
+            ],
+            [
+              -70.015869140625,
+              -15.824432373046875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01861572265625,
+              -15.824432373046875
+            ],
+            [
+              -70.01724243164062,
+              -15.824432373046875
+            ],
+            [
+              -70.01724243164062,
+              -15.82305908203125
+            ],
+            [
+              -70.01861572265625,
+              -15.82305908203125
+            ],
+            [
+              -70.01861572265625,
+              -15.824432373046875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01449584960938,
+              -15.824432373046875
+            ],
+            [
+              -70.01312255859375,
+              -15.824432373046875
+            ],
+            [
+              -70.01312255859375,
+              -15.82305908203125
+            ],
+            [
+              -70.01449584960938,
+              -15.82305908203125
+            ],
+            [
+              -70.01449584960938,
+              -15.824432373046875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.824432373046875
+            ],
+            [
+              -70.01861572265625,
+              -15.824432373046875
+            ],
+            [
+              -70.01861572265625,
+              -15.82305908203125
+            ],
+            [
+              -70.01998901367188,
+              -15.82305908203125
+            ],
+            [
+              -70.01998901367188,
+              -15.824432373046875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01312255859375,
+              -15.824432373046875
+            ],
+            [
+              -70.01174926757812,
+              -15.824432373046875
+            ],
+            [
+              -70.01174926757812,
+              -15.82305908203125
+            ],
+            [
+              -70.01312255859375,
+              -15.82305908203125
+            ],
+            [
+              -70.01312255859375,
+              -15.824432373046875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01724243164062,
+              -15.82305908203125
+            ],
+            [
+              -70.015869140625,
+              -15.82305908203125
+            ],
+            [
+              -70.015869140625,
+              -15.821685791015625
+            ],
+            [
+              -70.01724243164062,
+              -15.821685791015625
+            ],
+            [
+              -70.01724243164062,
+              -15.82305908203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.015869140625,
+              -15.82305908203125
+            ],
+            [
+              -70.01449584960938,
+              -15.82305908203125
+            ],
+            [
+              -70.01449584960938,
+              -15.821685791015625
+            ],
+            [
+              -70.015869140625,
+              -15.821685791015625
+            ],
+            [
+              -70.015869140625,
+              -15.82305908203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01861572265625,
+              -15.82305908203125
+            ],
+            [
+              -70.01724243164062,
+              -15.82305908203125
+            ],
+            [
+              -70.01724243164062,
+              -15.821685791015625
+            ],
+            [
+              -70.01861572265625,
+              -15.821685791015625
+            ],
+            [
+              -70.01861572265625,
+              -15.82305908203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.82305908203125
+            ],
+            [
+              -70.01861572265625,
+              -15.82305908203125
+            ],
+            [
+              -70.01861572265625,
+              -15.821685791015625
+            ],
+            [
+              -70.01998901367188,
+              -15.821685791015625
+            ],
+            [
+              -70.01998901367188,
+              -15.82305908203125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01724243164062,
+              -15.821685791015625
+            ],
+            [
+              -70.015869140625,
+              -15.821685791015625
+            ],
+            [
+              -70.015869140625,
+              -15.8203125
+            ],
+            [
+              -70.01724243164062,
+              -15.8203125
+            ],
+            [
+              -70.01724243164062,
+              -15.821685791015625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01861572265625,
+              -15.821685791015625
+            ],
+            [
+              -70.01724243164062,
+              -15.821685791015625
+            ],
+            [
+              -70.01724243164062,
+              -15.8203125
+            ],
+            [
+              -70.01861572265625,
+              -15.8203125
+            ],
+            [
+              -70.01861572265625,
+              -15.821685791015625
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "unap-campus",
+        "name": "Universidad Nacional del Altiplano",
+        "description": "Ciudad Universitaria de la UNA Puno, facultades y áreas académicas",
+        "color": "#0284c7"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.01998901367188,
+              -15.821685791015625
+            ],
+            [
+              -70.01861572265625,
+              -15.821685791015625
+            ],
+            [
+              -70.01861572265625,
+              -15.8203125
+            ],
+            [
+              -70.01998901367188,
+              -15.8203125
+            ],
+            [
+              -70.01998901367188,
+              -15.821685791015625
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

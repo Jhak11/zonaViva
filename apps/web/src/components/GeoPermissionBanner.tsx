@@ -3,14 +3,22 @@ import type { GeoPermission } from "@/stores/geoStore";
 import { useGeoStore } from "@/stores/geoStore";
 import { ZONES } from "@zonaviva/protocol";
 import { useState } from "react";
+import { MapPinIcon, BeakerIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   permission: GeoPermission;
 }
 
 export default function GeoPermissionBanner({ permission }: Props) {
-  const { simulatedZone, setSimulatedZone } = useGeoStore();
+  const { simulatedZone, setSimulatedZone, requestPermission } = useGeoStore();
   const [showSimModal, setShowSimModal] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const handleRequestGps = async () => {
+    setIsRequesting(true);
+    await requestPermission();
+    setIsRequesting(false);
+  };
 
   if (permission === "granted" && !simulatedZone) return null;
 
@@ -18,9 +26,13 @@ export default function GeoPermissionBanner({ permission }: Props) {
     <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl text-xs space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2 text-amber-300">
-          <span className="text-base flex-none">
-            {simulatedZone ? "🧪" : "📍"}
-          </span>
+          <div className="flex-none mt-0.5">
+            {simulatedZone ? (
+              <BeakerIcon className="w-4 h-4 text-purple-400" />
+            ) : (
+              <MapPinIcon className="w-4 h-4 text-amber-400" />
+            )}
+          </div>
           <div>
             <p className="font-semibold text-white">
               {simulatedZone
@@ -47,10 +59,22 @@ export default function GeoPermissionBanner({ permission }: Props) {
 
       <div className="flex items-center gap-1.5 pt-1">
         <button
-          onClick={() => setShowSimModal((prev) => !prev)}
-          className="px-2.5 py-1 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30 font-medium text-[11px] transition-colors"
+          type="button"
+          onClick={handleRequestGps}
+          disabled={isRequesting}
+          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-semibold text-[11px] transition-colors flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
         >
-          {showSimModal ? "Ocultar simulador" : "🧪 Simular presencia en zona para pruebas"}
+          <MapPinIcon className="w-3.5 h-3.5 text-emerald-400 flex-none" />
+          <span>{isRequesting ? "Solicitando..." : "Activar / Reintentar GPS"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowSimModal((prev) => !prev)}
+          className="px-2.5 py-1.5 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30 font-medium text-[11px] transition-colors flex items-center gap-1.5"
+        >
+          <BeakerIcon className="w-3.5 h-3.5 text-brand-400 flex-none" />
+          <span>{showSimModal ? "Ocultar simulador" : "Simular presencia"}</span>
         </button>
       </div>
 
@@ -70,8 +94,12 @@ export default function GeoPermissionBanner({ permission }: Props) {
               }`}
             >
               <div className="truncate font-medium">{zone.name}</div>
-              <div className="text-[10px] text-slate-400">
-                {zone.id === "puno-laureles" ? "🧪 Zona pruebas" : "Puno"}
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: zone.color || "#0284c7" }}
+                />
+                <span>{zone.cells.length} celdas · Puno</span>
               </div>
             </button>
           ))}

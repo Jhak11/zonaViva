@@ -14,8 +14,7 @@ ZonaViva es una red social web centrada en la **ubicación geográfica**. Las pe
 /
 ├─ apps/
 │  ├─ web/         # PWA React + Vite + TypeScript + Tailwind
-│  ├─ relay/       # Servidor Node.js + Socket.IO (solo memoria)
-│  └─ archivist/   # (Iteración 3) cliente Node que conserva copias
+│  └─ relay/       # Servidor Node.js + Socket.IO (solo memoria)
 ├─ packages/
 │  └─ protocol/    # Tipos, esquemas Zod, zones.json, constantes
 └─ docs/           # Plan de desarrollo y ADRs

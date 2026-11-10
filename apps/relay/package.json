@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "gen-key": "node -e \"const crypto=require('crypto'); const k=crypto.generateKeyPairSync('ec',{namedCurve:'prime256v1'}); console.log('=== RELAY_PRIVATE_KEY_PEM ===\\n' + k.privateKey.export({type:'pkcs8',format:'pem'})); console.log('=== PUBLIC_KEY_B64 ===\\n' + k.publicKey.export({type:'spki',format:'der'}).toString('base64url'));\"",
     "lint": "eslint src --ext ts"
   },
   "dependencies": {

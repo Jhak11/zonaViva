@@ -6,7 +6,6 @@
   "scripts": {
     "dev:web": "pnpm --filter @zonaviva/web dev",
     "dev:relay": "pnpm --filter @zonaviva/relay dev",
-    "dev:archivist": "pnpm --filter @zonaviva/archivist dev",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",

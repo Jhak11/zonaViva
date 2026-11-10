@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   MsgPayloadSchema,
   AliasSchema,
-  RegisterForumSchema,
+  CreateTemporaryForumSchema,
   QueueChatSchema,
   MAX_MESSAGE_LENGTH,
 } from "@zonaviva/protocol";
@@ -21,7 +21,7 @@ describe("Protocol Validation Schemas", () => {
   it("validates forum message payload correctly", () => {
     const msg = {
       id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
-      forumId: "zone:puno-centro",
+      forumId: "zone:plaza-mayor",
       alias: "CóndorAndino456",
       authorKey: "base64publicKeyDataSample",
       content: "Buenas tardes a todos en la Plaza de Armas de Puno.",
@@ -36,7 +36,7 @@ describe("Protocol Validation Schemas", () => {
   it("rejects messages exceeding MAX_MESSAGE_LENGTH", () => {
     const msg = {
       id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
-      forumId: "zone:puno-centro",
+      forumId: "zone:plaza-mayor",
       alias: "CóndorAndino456",
       authorKey: "base64publicKeyDataSample",
       content: "A".repeat(MAX_MESSAGE_LENGTH + 1),
@@ -48,19 +48,23 @@ describe("Protocol Validation Schemas", () => {
     expect(parsed.success).toBe(false);
   });
 
-  it("validates forum registration schema with geohash", () => {
+  it("validates temporary user forum creation schema", () => {
     const forum = {
       id: "user:123e4567-e89b-12d3-a456-426614174000",
       name: "Vecinos Jirón Lima",
-      geohash: "6m7h2b", // 6 chars
+      description: "Charla comunitaria",
+      latitude: -15.84,
+      longitude: -70.02,
+      radius: 200,
       createdAt: 1729000000000,
+      creatorKey: "pubkey_creator_sample",
     };
-    expect(RegisterForumSchema.safeParse(forum).success).toBe(true);
+    expect(CreateTemporaryForumSchema.safeParse(forum).success).toBe(true);
   });
 
   it("validates queue chat schema", () => {
     const queue = {
-      zoneId: "puno-centro",
+      zoneId: "plaza-mayor",
       ephemeralPublicKey: "ephemeralKeyBase64String",
     };
     expect(QueueChatSchema.safeParse(queue).success).toBe(true);

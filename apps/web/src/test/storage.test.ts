@@ -10,9 +10,25 @@ import {
   removeOutboxMessage,
   ensureForumRecord,
   clearAllLocalData,
+  mergeMessageLists,
+  RETENTION_MS,
+  pruneOldMessages,
 } from "../db/storage";
 import type { Message, OutboxMessage } from "@zonaviva/protocol";
 import { verifyRelaySeal } from "../modules/relayCrypto";
+
+function makeMsg(partial: Partial<Message> & Pick<Message, "id" | "forumId" | "content">): Message {
+  const now = Date.now();
+  return {
+    alias: "Andes",
+    authorKey: "key",
+    clientTs: now,
+    relayTs: now,
+    sig: "sig",
+    relaySig: "rsig",
+    ...partial,
+  };
+}
 
 describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", () => {
   beforeEach(async () => {
@@ -20,8 +36,9 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
   });
 
   it("stores and retrieves forum messages ordered by relayTs", async () => {
-    const forumId = "zone:puno-laureles";
+    const forumId = "zone:mercado-central";
     await ensureForumRecord(forumId, "Jirón Los Laureles");
+    const now = Date.now();
 
     const m1: Message = {
       id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
@@ -29,8 +46,8 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
       alias: "Andes1",
       authorKey: "key1",
       content: "Primer mensaje",
-      clientTs: 100,
-      relayTs: 1000,
+      clientTs: now - 20,
+      relayTs: now - 20,
       sig: "sig1",
       relaySig: "relaySig1",
     };
@@ -41,8 +58,8 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
       alias: "Andes2",
       authorKey: "key2",
       content: "Segundo mensaje",
-      clientTs: 110,
-      relayTs: 2000,
+      clientTs: now - 10,
+      relayTs: now - 10,
       sig: "sig2",
       relaySig: "relaySig2",
     };
@@ -57,15 +74,15 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
   });
 
   it("deduplicates messages upon repeated saves", async () => {
-    const forumId = "zone:puno-centro";
+    const forumId = "zone:plaza-mayor";
     const msg: Message = {
       id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
       forumId,
       alias: "Andes1",
       authorKey: "key1",
       content: "Mensaje único",
-      clientTs: 100,
-      relayTs: 1000,
+      clientTs: Date.now(),
+      relayTs: Date.now(),
       sig: "sig1",
       relaySig: "relaySig1",
     };
@@ -78,7 +95,8 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
   });
 
   it("answers peer sync queries (getMessagesSince) correctly", async () => {
-    const forumId = "zone:puno-puerto";
+    const forumId = "zone:unap-campus";
+    const base = Date.now() - 1_000;
     const messages: Message[] = [
       {
         id: "msg-1",
@@ -86,8 +104,8 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
         alias: "User1",
         authorKey: "k1",
         content: "Antiguo",
-        clientTs: 10,
-        relayTs: 100,
+        clientTs: base,
+        relayTs: base,
         sig: "s1",
         relaySig: "rs1",
       },
@@ -97,8 +115,8 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
         alias: "User2",
         authorKey: "k2",
         content: "Medio",
-        clientTs: 20,
-        relayTs: 200,
+        clientTs: base + 100,
+        relayTs: base + 100,
         sig: "s2",
         relaySig: "rs2",
       },
@@ -108,8 +126,8 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
         alias: "User3",
         authorKey: "k3",
         content: "Reciente",
-        clientTs: 30,
-        relayTs: 300,
+        clientTs: base + 200,
+        relayTs: base + 200,
         sig: "s3",
         relaySig: "rs3",
       },
@@ -117,21 +135,81 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
 
     await saveMessages(messages);
 
-    // Solicitar mensajes posteriores a relayTs 150
-    const since150 = await getMessagesSince(forumId, 150);
-    expect(since150.length).toBe(2);
-    expect(since150[0].id).toBe("msg-2");
-    expect(since150[1].id).toBe("msg-3");
+    const sinceMid = await getMessagesSince(forumId, base + 50);
+    expect(sinceMid.length).toBe(2);
+    expect(sinceMid[0].id).toBe("msg-2");
+    expect(sinceMid[1].id).toBe("msg-3");
 
-    // Solicitar mensajes posteriores a 300 (ninguno)
-    const since300 = await getMessagesSince(forumId, 300);
-    expect(since300.length).toBe(0);
+    const sinceLast = await getMessagesSince(forumId, base + 200);
+    expect(sinceLast.length).toBe(0);
+  });
+
+  it("merges forked histories without duplicates and in canonical order", () => {
+    const forumId = "zone:mercado-central";
+    const now = Date.now();
+    const older = Array.from({ length: 5 }, (_, i) =>
+      makeMsg({
+        id: `old-${String(i + 1).padStart(3, "0")}`,
+        forumId,
+        content: `m${i + 1}`,
+        relayTs: now - 500 + i,
+      })
+    );
+    const newer = Array.from({ length: 3 }, (_, i) =>
+      makeMsg({
+        id: `new-${String(i + 101).padStart(3, "0")}`,
+        forumId,
+        content: `m${i + 101}`,
+        relayTs: now - 200 + i,
+      })
+    );
+    const overlap = [older[4], newer[0]];
+    const merged = mergeMessageLists(older, [...newer, ...overlap]);
+    expect(merged.map((m) => m.id)).toEqual([
+      "old-001",
+      "old-002",
+      "old-003",
+      "old-004",
+      "old-005",
+      "new-101",
+      "new-102",
+      "new-103",
+    ]);
+  });
+
+  it("discards messages older than 3 days and does not serve them on sync", async () => {
+    const forumId = "zone:plaza-mayor";
+    const expired = makeMsg({
+      id: "expired-1",
+      forumId,
+      content: "viejo",
+      relayTs: Date.now() - RETENTION_MS - 5_000,
+    });
+    const fresh = makeMsg({
+      id: "fresh-1",
+      forumId,
+      content: "nuevo",
+      relayTs: Date.now() - 1_000,
+    });
+
+    await saveMessages([expired, fresh]);
+    const stored = await getForumMessages(forumId);
+    expect(stored.map((m) => m.id)).toEqual(["fresh-1"]);
+
+    await db.messages.put(expired);
+    await pruneOldMessages(forumId);
+    const afterPrune = await getForumMessages(forumId);
+    expect(afterPrune.map((m) => m.id)).toEqual(["fresh-1"]);
+
+    const served = await getMessagesSince(forumId, 0);
+    expect(served.every((m) => m.relayTs >= Date.now() - RETENTION_MS)).toBe(true);
+    expect(served.map((m) => m.id)).toEqual(["fresh-1"]);
   });
 
   it("manages offline outbox queue properly", async () => {
     const outboxItem: OutboxMessage = {
       id: "out-1",
-      forumId: "zone:puno-laureles",
+      forumId: "zone:mercado-central",
       content: "Mensaje redactado sin conexión",
       clientTs: Date.now(),
       retries: 0,
@@ -139,20 +217,20 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
 
     await addOutboxMessage(outboxItem);
 
-    const pending = await getOutboxMessages("zone:puno-laureles");
+    const pending = await getOutboxMessages("zone:mercado-central");
     expect(pending.length).toBe(1);
     expect(pending[0].content).toBe(outboxItem.content);
 
     // Al enviarse y confirmarse por el relay, se remueve
     await removeOutboxMessage("out-1");
-    const emptyPending = await getOutboxMessages("zone:puno-laureles");
+    const emptyPending = await getOutboxMessages("zone:mercado-central");
     expect(emptyPending.length).toBe(0);
   });
 
   it("discards messages with empty or invalid relay seals", async () => {
     const msgWithoutSeal = {
       id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
-      forumId: "zone:puno-centro",
+      forumId: "zone:plaza-mayor",
       relayTs: 1000,
       content: "Mensaje sin sello legítimo",
       relaySig: "",
@@ -169,7 +247,7 @@ describe("Iteración 3 – Almacenamiento Local (IndexedDB) y Sincronización", 
 
     const msg = {
       id: "01JBP8R3D6V7M4W0Q5G9S8T7Y1",
-      forumId: "zone:puno-centro",
+      forumId: "zone:plaza-mayor",
       relayTs: 1730000000000,
       content: "Mensaje sellado legítimamente",
     };
